@@ -3,107 +3,73 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>KinoHub - Mini App</title>
-  <!-- Telegram Web App rasmiy skripti -->
+  <title>KinoHub Mini App</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: var(--tg-theme-bg-color, #0f0f12);
-      color: var(--tg-theme-text-color, #ffffff);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #0f0f12;
+      color: #ffffff;
       padding: 12px;
     }
-    header {
-      text-align: center;
-      margin-bottom: 16px;
+    header h1 { font-size: 22px; color: #e50914; text-align: center; margin-bottom: 15px; }
+    .section-title {
+      font-size: 16px;
+      margin: 15px 0 10px 0;
+      color: #ff9800;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
-    header h1 {
-      font-size: 20px;
-      color: #e50914; /* Qizil kino uslubi */
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    header p {
-      font-size: 13px;
-      color: #888;
-      margin-top: 4px;
-    }
-
-    /* Qidiruv qatori */
-    .search-box {
-      margin-bottom: 16px;
-    }
-    .search-box input {
-      width: 100%;
-      padding: 10px 14px;
-      border-radius: 8px;
-      border: 1px solid #2a2a32;
-      background: #1a1a22;
-      color: #fff;
-      font-size: 14px;
-      outline: none;
-    }
-    .search-box input:focus {
-      border-color: #e50914;
-    }
-
-    /* Kinolar to'plami (Grid) */
-    .movies-grid {
+    .grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 12px;
+      margin-bottom: 20px;
     }
     .card {
       background: #181820;
-      border-radius: 10px;
+      border-radius: 8px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       border: 1px solid #252530;
-      transition: transform 0.2s;
+      position: relative;
+    }
+    .badge-new {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      background: #e50914;
+      color: #fff;
+      font-size: 10px;
+      font-weight: bold;
+      padding: 2px 6px;
+      border-radius: 4px;
     }
     .card img {
       width: 100%;
-      height: 220px;
+      height: 200px;
       object-fit: cover;
       background-color: #222;
     }
     .card-info {
-      padding: 8px 10px;
-      flex-grow: 1;
+      padding: 8px;
       display: flex;
       flex-direction: column;
+      flex-grow: 1;
       justify-content: space-between;
     }
-    .card-title {
-      font-size: 13px;
-      font-weight: 600;
-      line-height: 1.3;
-      margin-bottom: 4px;
-    }
-    .card-desc {
-      font-size: 11px;
-      color: #999;
-      margin-bottom: 8px;
-    }
-    .btn-watch {
-      background-color: #e50914;
+    .card-title { font-size: 13px; font-weight: bold; margin-bottom: 6px; }
+    .btn {
+      background: #e50914;
       color: #fff;
       border: none;
-      padding: 8px;
-      border-radius: 6px;
-      font-size: 12px;
+      padding: 6px;
+      border-radius: 4px;
       font-weight: bold;
       cursor: pointer;
-      width: 100%;
-    }
-    .btn-watch:active {
-      opacity: 0.8;
     }
   </style>
 </head>
@@ -111,86 +77,74 @@
 
   <header>
     <h1>🎬 KINOHUB</h1>
-    <p>O'zingizga yoqqan kinoni tanlang</p>
   </header>
 
-  <div class="search-box">
-    <input type="text" id="searchInput" placeholder="Kino qidirish..." oninput="filterMovies()">
+  <!-- 24 soat ichida qo'shilganlar -->
+  <div id="newSection" style="display: none;">
+    <div class="section-title">🔥 Yangi premyeralar (24 soat)</div>
+    <div class="grid" id="newMovies"></div>
   </div>
 
-  <div class="movies-grid" id="moviesContainer">
-    <!-- Kinolar JavaScript orqali avtomatik joylashadi -->
-  </div>
+  <!-- Barcha kinolar -->
+  <div class="section-title">🍿 Barcha kinolar va seriallar</div>
+  <div class="grid" id="allMovies"></div>
 
   <script>
     const tg = window.Telegram.WebApp;
     tg.ready();
-    tg.expand(); // Ekran to'liq kengayishi uchun
+    tg.expand();
 
-    // KINOLAR RO'YXATI (Bu yerga istagancha yangi kino qo'sha olasiz)
-    const movies = [
-      {
-        code: 101,
-        title: "Avatar: Suv Yo'li",
-        desc: "2022 • Fantastika, Jangari",
-        image: "https://m.media-amazon.com/images/M/MV5BYjhiNjBlODctY2ZiOC00YjVlLWFlNzAtNTVhNzM1YjI1NzMxXkEyXkFqcGdeQXVyMjkwOTAyMDU@._V1_FMjpg_UX1000_.jpg"
-      },
-      {
-        code: 102,
-        title: "Forsaj 10",
-        desc: "2023 • Jangari, Triller",
-        image: "https://m.media-amazon.com/images/M/MV5BYzA2Nzk5MTAtNGYwNi00MmFiLWE2MWYtODEzZWQ1NzA0YzU2XkEyXkFqcGdeQXVyMTUzMTg2ODkz._V1_FMjpg_UX1000_.jpg"
-      },
-      {
-        code: 103,
-        title: "Oppenheimer",
-        desc: "2023 • Tarixiy, Drama",
-        image: "https://m.media-amazon.com/images/M/MV5BMDBmYTZjNjUtN2M1MS00MTQ2LTk2ODgtNzc2M2QyZGE5NTVjXkEyXkFqcGdeQXVyNzAwMjU2MTY@._V1_FMjpg_UX1000_.jpg"
-      },
-      {
-        code: 201,
-        title: "Qashqirlar Makoni",
-        desc: "Serial • Kriminal, Jangari",
-        image: "https://m.media-amazon.com/images/M/MV5BNTBmZDI1YmUtNTQ2YS00YWI2LTkyYTctNjExZGRkMWY2MzdiXkEyXkFqcGdeQXVyMjg0MTMwNTU@._V1_.jpg"
-      }
-    ];
+    // Bot serveringizning ochiq IP yoki domeni (masalan: http://SERVER_IP:8080/api/movies)
+    const API_URL = "http://SIZNING_SERVER_IP:8080/api/movies";
 
-    function renderMovies(items) {
-      const container = document.getElementById("moviesContainer");
-      container.innerHTML = "";
+    async function loadData() {
+      try {
+        const res = await fetch(API_URL);
+        const data = await res.json();
 
-      items.forEach(movie => {
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
-          <img src="${movie.image}" alt="${movie.title}">
-          <div class="card-info">
-            <div>
-              <div class="card-title">${movie.title}</div>
-              <div class="card-desc">${movie.desc}</div>
+        const newContainer = document.getElementById("newMovies");
+        const allContainer = document.getElementById("allMovies");
+        const newSection = document.getElementById("newSection");
+
+        newContainer.innerHTML = "";
+        allContainer.innerHTML = "";
+
+        let hasNew = false;
+
+        data.forEach(item => {
+          const cardHtml = `
+            <div class="card">
+              ${item.is_new ? '<span class="badge-new">YANGI</span>' : ''}
+              <img src="${item.poster}" alt="${item.title}">
+              <div class="card-info">
+                <div class="card-title">${item.title}</div>
+                <button class="btn" onclick="sendToBot(${item.code})">Ko'rish</button>
+              </div>
             </div>
-            <button class="btn-watch" onclick="selectMovie(${movie.code})">Tomosha qilish</button>
-          </div>
-        `;
-        container.appendChild(card);
-      });
+          `;
+
+          // Agar 24 soat ichida qo'shilgan bo'lsa
+          if (item.is_new) {
+            hasNew = true;
+            newContainer.innerHTML += cardHtml;
+          }
+
+          // Umumiy ro'yxatga ham qo'shamiz
+          allContainer.innerHTML += cardHtml;
+        });
+
+        if (hasNew) newSection.style.display = "block";
+
+      } catch (err) {
+        console.error("Xatolik:", err);
+      }
     }
 
-    // Qidiruv funksiyasi
-    function filterMovies() {
-      const q = document.getElementById("searchInput").value.toLowerCase();
-      const filtered = movies.filter(m => m.title.toLowerCase().includes(q));
-      renderMovies(filtered);
-    }
-
-    // Kinoni tanlaganda Telegram botga kodni uzatish
-    function selectMovie(code) {
-      // Botga kodni matn shaklida yuboradi va ilovani yopadi
+    function sendToBot(code) {
       tg.sendData(code.toString());
     }
 
-    // Sahifa ochilganda kinolarni chizamiz
-    renderMovies(movies);
+    loadData();
   </script>
 </body>
 </html>
