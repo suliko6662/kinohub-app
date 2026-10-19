@@ -3,148 +3,345 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>KinoHub Mini App</title>
+  <title>KinoHub Cinema Pro</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #090a0f;
+      --card-bg: rgba(22, 24, 34, 0.7);
+      --accent: #ff0055;
+      --accent-glow: rgba(255, 0, 85, 0.4);
+      --text: #ffffff;
+      --text-muted: #8e95a5;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: #0f0f12;
-      color: #ffffff;
-      padding: 12px;
+      background: var(--bg);
+      color: var(--text);
+      padding-bottom: 30px;
+      overflow-x: hidden;
     }
-    header h1 { font-size: 22px; color: #e50914; text-align: center; margin-bottom: 15px; }
-    .section-title {
-      font-size: 16px;
-      margin: 15px 0 10px 0;
-      color: #ff9800;
+
+    /* Top Bar */
+    .top-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      background: linear-gradient(180deg, rgba(9,10,15,0.9) 0%, transparent 100%);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(10px);
+    }
+    .logo {
+      font-weight: 900;
+      font-size: 20px;
+      letter-spacing: 1px;
+      background: linear-gradient(45deg, #ff0055, #ff5500);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Qidiruv */
+    .search-container {
+      padding: 0 16px 12px 16px;
+    }
+    .search-box {
+      background: var(--card-bg);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
       display: flex;
       align-items: center;
-      gap: 6px;
+      padding: 10px 14px;
+      gap: 10px;
     }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-      margin-bottom: 20px;
+    .search-box input {
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 14px;
+      width: 100%;
+      outline: none;
     }
-    .card {
-      background: #181820;
-      border-radius: 8px;
+
+    /* Katta Hero Banner */
+    .hero-banner {
+      position: relative;
+      margin: 0 16px 20px 16px;
+      height: 220px;
+      border-radius: 16px;
       overflow: hidden;
+      box-shadow: 0 8px 24px var(--accent-glow);
+    }
+    .hero-banner img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(0deg, #090a0f 10%, transparent 90%);
       display: flex;
       flex-direction: column;
-      border: 1px solid #252530;
-      position: relative;
+      justify-content: flex-end;
+      padding: 16px;
     }
-    .badge-new {
-      position: absolute;
-      top: 6px;
-      left: 6px;
-      background: #e50914;
+    .hero-tag {
+      background: var(--accent);
       color: #fff;
       font-size: 10px;
       font-weight: bold;
+      padding: 3px 8px;
+      border-radius: 4px;
+      width: fit-content;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+
+    /* Sarlavhalar */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 16px;
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: 17px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title i { color: var(--accent); }
+
+    /* 24 Soatlik Gorizontal Karusel */
+    .horizontal-scroll {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding: 0 16px 14px 16px;
+      scrollbar-width: none;
+    }
+    .horizontal-scroll::-webkit-scrollbar { display: none; }
+    .story-card {
+      min-width: 130px;
+      max-width: 130px;
+      background: var(--card-bg);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.05);
+      position: relative;
+      flex-shrink: 0;
+    }
+    .story-card img {
+      width: 100%;
+      height: 170px;
+      object-fit: cover;
+    }
+    .new-badge {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      background: #ff5500;
+      color: white;
+      font-size: 9px;
+      font-weight: 800;
       padding: 2px 6px;
       border-radius: 4px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
     }
-    .card img {
+
+    /* Asosiy Grid (Barcha kinolar) */
+    .movies-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      padding: 0 16px;
+    }
+    .grid-card {
+      background: var(--card-bg);
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .grid-card img {
       width: 100%;
-      height: 200px;
+      height: 220px;
       object-fit: cover;
-      background-color: #222;
     }
-    .card-info {
-      padding: 8px;
+    .grid-info {
+      padding: 10px;
       display: flex;
       flex-direction: column;
       flex-grow: 1;
       justify-content: space-between;
     }
-    .card-title { font-size: 13px; font-weight: bold; margin-bottom: 6px; }
-    .btn {
-      background: #e50914;
+    .grid-title {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .grid-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .play-btn {
+      background: linear-gradient(90deg, #ff0055, #d60047);
       color: #fff;
       border: none;
-      padding: 6px;
-      border-radius: 4px;
-      font-weight: bold;
+      padding: 8px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
       cursor: pointer;
+      box-shadow: 0 4px 12px var(--accent-glow);
     }
+    .play-btn:active { transform: scale(0.97); }
   </style>
 </head>
 <body>
 
-  <header>
-    <h1>🎬 KINOHUB</h1>
-  </header>
-
-  <!-- 24 soat ichida qo'shilganlar -->
-  <div id="newSection" style="display: none;">
-    <div class="section-title">🔥 Yangi premyeralar (24 soat)</div>
-    <div class="grid" id="newMovies"></div>
+  <!-- Top bar -->
+  <div class="top-nav">
+    <div class="logo"><i class="fa-solid fa-film"></i> KINOHUB</div>
+    <div style="font-size: 12px; color: var(--text-muted);"><i class="fa-solid fa-bolt" style="color: #ffaa00;"></i> HD Sifat</div>
   </div>
 
-  <!-- Barcha kinolar -->
-  <div class="section-title">🍿 Barcha kinolar va seriallar</div>
-  <div class="grid" id="allMovies"></div>
+  <!-- Qidiruv -->
+  <div class="search-container">
+    <div class="search-box">
+      <i class="fa-solid fa-magnifying-glass" style="color: var(--text-muted);"></i>
+      <input type="text" id="searchInput" placeholder="Kino yoki serial qidirish..." oninput="handleSearch()">
+    </div>
+  </div>
+
+  <!-- Bosh afisha (Banner) -->
+  <div class="hero-banner" id="heroBanner" style="display: none;">
+    <img id="heroImg" src="" alt="Banner">
+    <div class="hero-overlay">
+      <span class="hero-tag">🔥 Kunning Premyerasi</span>
+      <h3 id="heroTitle" style="font-size: 16px; margin-bottom: 6px;"></h3>
+      <button class="play-btn" style="width: 120px;" id="heroBtn"><i class="fa-solid fa-play"></i> Ko'rish</button>
+    </div>
+  </div>
+
+  <!-- 24 Soat ichida yangilar bo'limi -->
+  <div id="newSection" style="display: none;">
+    <div class="section-header">
+      <div class="section-title"><i class="fa-solid fa-fire-flame-curved"></i> Yangi premyeralar (24 soat)</div>
+    </div>
+    <div class="horizontal-scroll" id="newMoviesList"></div>
+  </div>
+
+  <!-- Barcha kinolar va seriallar -->
+  <div class="section-header" style="margin-top: 10px;">
+    <div class="section-title"><i class="fa-solid fa-layer-group"></i> Barcha filmlar</div>
+  </div>
+  <div class="movies-grid" id="allMoviesGrid"></div>
 
   <script>
     const tg = window.Telegram.WebApp;
     tg.ready();
     tg.expand();
 
-    // Bot serveringizning ochiq IP yoki domeni (masalan: http://SERVER_IP:8080/api/movies)
+    // Serveringiz manzili
     const API_URL = "http://SIZNING_SERVER_IP:8080/api/movies";
+    let globalMovies = [];
 
-    async function loadData() {
+    async function loadCatalog() {
       try {
         const res = await fetch(API_URL);
         const data = await res.json();
-
-        const newContainer = document.getElementById("newMovies");
-        const allContainer = document.getElementById("allMovies");
-        const newSection = document.getElementById("newSection");
-
-        newContainer.innerHTML = "";
-        allContainer.innerHTML = "";
-
-        let hasNew = false;
-
-        data.forEach(item => {
-          const cardHtml = `
-            <div class="card">
-              ${item.is_new ? '<span class="badge-new">YANGI</span>' : ''}
-              <img src="${item.poster}" alt="${item.title}">
-              <div class="card-info">
-                <div class="card-title">${item.title}</div>
-                <button class="btn" onclick="sendToBot(${item.code})">Ko'rish</button>
-              </div>
-            </div>
-          `;
-
-          // Agar 24 soat ichida qo'shilgan bo'lsa
-          if (item.is_new) {
-            hasNew = true;
-            newContainer.innerHTML += cardHtml;
-          }
-
-          // Umumiy ro'yxatga ham qo'shamiz
-          allContainer.innerHTML += cardHtml;
-        });
-
-        if (hasNew) newSection.style.display = "block";
-
+        globalMovies = data;
+        renderAll(data);
       } catch (err) {
-        console.error("Xatolik:", err);
+        console.error("API xatolik:", err);
       }
     }
 
-    function sendToBot(code) {
+    function renderAll(items) {
+      const newList = document.getElementById("newMoviesList");
+      const allGrid = document.getElementById("allMoviesGrid");
+      const newSec = document.getElementById("newSection");
+      const hero = document.getElementById("heroBanner");
+
+      newList.innerHTML = "";
+      allGrid.innerHTML = "";
+
+      let hasNew = false;
+
+      // Agar kinolar bo'lsa, 1-sini Bannerga qo'yamiz
+      if (items.length > 0) {
+        const topItem = items[0];
+        document.getElementById("heroImg").src = topItem.poster;
+        document.getElementById("heroTitle").innerText = topItem.title;
+        document.getElementById("heroBtn").onclick = () => sendMovie(topItem.code);
+        hero.style.display = "block";
+      }
+
+      items.forEach(item => {
+        // Yangi kinolar (Gorizontal ro'yxat)
+        if (item.is_new) {
+          hasNew = true;
+          newList.innerHTML += `
+            <div class="story-card" onclick="sendMovie(${item.code})">
+              <span class="new-badge">24 SOAT</span>
+              <img src="${item.poster}" alt="${item.title}">
+              <div style="padding: 6px; font-size: 11px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                ${item.title}
+              </div>
+            </div>
+          `;
+        }
+
+        // Asosiy Grid kartochkasi
+        allGrid.innerHTML += `
+          <div class="grid-card">
+            <img src="${item.poster}" alt="${item.title}">
+            <div class="grid-info">
+              <div>
+                <div class="grid-title">${item.title}</div>
+                <div class="grid-desc">${item.type === 'serial' ? '📺 Serial' : '🎬 Kino'} • Kod: ${item.code}</div>
+              </div>
+              <button class="play-btn" onclick="sendMovie(${item.code})">
+                <i class="fa-solid fa-play"></i> Ko'rish
+              </button>
+            </div>
+          </div>
+        `;
+      });
+
+      if (hasNew) newSec.style.display = "block";
+    }
+
+    function handleSearch() {
+      const q = document.getElementById("searchInput").value.toLowerCase();
+      const filtered = globalMovies.filter(m => m.title.toLowerCase().includes(q));
+      renderAll(filtered);
+    }
+
+    function sendMovie(code) {
       tg.sendData(code.toString());
     }
 
-    loadData();
+    loadCatalog();
   </script>
 </body>
 </html>
