@@ -2,346 +2,930 @@
 <html lang="uz">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>LostFilm</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="referrer" content="no-referrer">
+  <title>LostFilm Cinema Pro</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
-      --bg: #090a0f;
-      --card-bg: rgba(22, 24, 34, 0.7);
-      --accent: #ff0055;
-      --accent-glow: rgba(255, 0, 85, 0.4);
-      --text: #ffffff;
-      --text-muted: #8e95a5;
+      --bg: #090c14;
+      --surface: rgba(18, 24, 38, 0.75);
+      --surface-border: rgba(255, 255, 255, 0.1);
+      --brand-color: #f39c12;
+      --brand-gradient: linear-gradient(135deg, #f39c12 0%, #d35400 100%);
+      --brand-glow: rgba(243, 156, 18, 0.4);
+      --btn-cinema: linear-gradient(135deg, #ff0055 0%, #d60047 100%);
+      --btn-glow: rgba(255, 0, 85, 0.4);
+      --white-glow: rgba(255, 255, 255, 0.2);
+      --text-main: #ffffff;
+      --text-muted: #94a3b8;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    body {
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      padding-bottom: 30px;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      padding: 16px;
+      padding-bottom: 40px;
       overflow-x: hidden;
+      min-height: 100vh;
+      background-image: radial-gradient(circle at 50% 0%, rgba(243, 156, 18, 0.08) 0%, transparent 65%);
     }
 
     /* Top Bar */
-    .top-nav {
+    .top-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 16px;
-      background: linear-gradient(180deg, rgba(9,10,15,0.9) 0%, transparent 100%);
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      backdrop-filter: blur(10px);
+      margin-bottom: 14px;
+      max-width: 420px;
+      margin-left: auto;
+      margin-right: auto;
     }
-    .logo {
-      font-weight: 900;
-      font-size: 20px;
-      letter-spacing: 1px;
-      background: linear-gradient(45deg, #ff0055, #ff5500);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    /* Qidiruv */
-    .search-container {
-      padding: 0 16px 12px 16px;
-    }
-    .search-box {
-      background: var(--card-bg);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      padding: 10px 14px;
-      gap: 10px;
-    }
-    .search-box input {
-      background: transparent;
-      border: none;
-      color: #fff;
-      font-size: 14px;
-      width: 100%;
-      outline: none;
-    }
-
-    /* Katta Hero Banner */
-    .hero-banner {
-      position: relative;
-      margin: 0 16px 20px 16px;
-      height: 220px;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 8px 24px var(--accent-glow);
-    }
-    .hero-banner img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .hero-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(0deg, #090a0f 10%, transparent 90%);
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      padding: 16px;
-    }
-    .hero-tag {
-      background: var(--accent);
-      color: #fff;
-      font-size: 10px;
-      font-weight: bold;
-      padding: 3px 8px;
-      border-radius: 4px;
-      width: fit-content;
-      margin-bottom: 6px;
-      text-transform: uppercase;
-    }
-
-    /* Sarlavhalar */
-    .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0 16px;
-      margin-bottom: 12px;
-    }
-    .section-title {
-      font-size: 17px;
-      font-weight: 700;
+    .brand {
       display: flex;
       align-items: center;
       gap: 8px;
     }
-    .section-title i { color: var(--accent); }
-
-    /* 24 Soatlik Gorizontal Karusel */
-    .horizontal-scroll {
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--brand-gradient);
+      border-radius: 9px;
       display: flex;
-      gap: 12px;
-      overflow-x: auto;
-      padding: 0 16px 14px 16px;
-      scrollbar-width: none;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 14px;
+      color: #fff;
+      box-shadow: 0 4px 14px var(--brand-glow);
     }
-    .horizontal-scroll::-webkit-scrollbar { display: none; }
-    .story-card {
-      min-width: 130px;
-      max-width: 130px;
-      background: var(--card-bg);
-      border-radius: 12px;
-      overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.05);
-      position: relative;
-      flex-shrink: 0;
+    .brand-title {
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      color: #ffffff;
     }
-    .story-card img {
-      width: 100%;
-      height: 170px;
-      object-fit: cover;
-    }
-    .new-badge {
-      position: absolute;
-      top: 6px;
-      left: 6px;
-      background: #ff5500;
-      color: white;
-      font-size: 9px;
-      font-weight: 800;
-      padding: 2px 6px;
-      border-radius: 4px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    .brand-title span {
+      color: var(--brand-color);
     }
 
-    /* Asosiy Grid (Barcha kinolar) */
-    .movies-grid {
+    .lang-switcher {
+      display: flex;
+      gap: 4px;
+      background: rgba(18, 24, 38, 0.9);
+      padding: 4px;
+      border-radius: 20px;
+      border: 1px solid var(--surface-border);
+    }
+    .lang-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 12px;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .lang-btn.active {
+      background: #ffffff;
+      color: #090c14;
+      box-shadow: 0 2px 8px rgba(255, 255, 255, 0.25);
+    }
+
+    /* Bo'limlar / Filtrlar (Faqat Barchasi, Kinolar, Seriallar) */
+    .filter-tabs {
+      display: flex;
+      gap: 8px;
+      max-width: 420px;
+      margin: 0 auto 10px auto;
+      background: rgba(15, 21, 34, 0.6);
+      padding: 5px;
+      border-radius: 14px;
+      border: 1px solid var(--surface-border);
+    }
+    .tab-item {
+      flex: 1;
+      padding: 9px 0;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 700;
+      border-radius: 10px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.25s ease;
+    }
+    .tab-item.active {
+      background: #ffffff;
+      color: #090c14;
+      box-shadow: 0 4px 14px var(--white-glow);
+    }
+
+    /* FILTRLAR PASTIDAGI DONAT BANNER-TUGMASI */
+    .donate-sub-banner {
+      max-width: 420px;
+      margin: 0 auto 14px auto;
+      background: rgba(255, 0, 85, 0.1);
+      border: 1px dashed rgba(255, 0, 85, 0.4);
+      border-radius: 12px;
+      padding: 9px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .donate-sub-banner:active {
+      transform: scale(0.98);
+      background: rgba(255, 0, 85, 0.2);
+    }
+    .donate-sub-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #ff3377;
+    }
+    .donate-sub-btn {
+      background: var(--btn-cinema);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px var(--btn-glow);
+    }
+
+    /* Qidiruv */
+    .search-box {
+      max-width: 420px;
+      margin: 0 auto 14px auto;
+    }
+    .search-input {
+      width: 100%;
+      padding: 11px 14px;
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 12px;
+      color: #fff;
+      font-size: 13px;
+      outline: none;
+      backdrop-filter: blur(8px);
+    }
+    .search-input:focus {
+      border-color: var(--brand-color);
+      box-shadow: 0 0 12px var(--brand-glow);
+    }
+
+    /* Asosiy Katalog Panjarasi */
+    .catalog-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-      padding: 0 16px;
+      gap: 14px;
+      max-width: 420px;
+      margin: 0 auto;
     }
-    .grid-card {
-      background: var(--card-bg);
-      border-radius: 14px;
+
+    .movie-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 16px;
       overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.06);
       display: flex;
       flex-direction: column;
       position: relative;
+      backdrop-filter: blur(12px);
+      transition: transform 0.2s ease, border-color 0.2s ease;
     }
-    .grid-card img {
+    .movie-card:active {
+      transform: scale(0.97);
+      border-color: #ff0055;
+    }
+
+    .poster-box {
       width: 100%;
-      height: 220px;
-      object-fit: cover;
+      height: 195px;
+      position: relative;
+      background: #111624;
+      overflow: hidden;
     }
-    .grid-info {
-      padding: 10px;
+    .poster-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .type-tag {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 800;
+      backdrop-filter: blur(8px);
+      text-transform: uppercase;
+    }
+    .type-kino {
+      background: rgba(255, 0, 85, 0.25);
+      border: 1px solid rgba(255, 0, 85, 0.5);
+      color: #ff3377;
+    }
+    .type-serial {
+      background: rgba(0, 229, 255, 0.2);
+      border: 1px solid rgba(0, 229, 255, 0.4);
+      color: #38bdf8;
+    }
+
+    .code-tag {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      background: rgba(9, 12, 20, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .card-details {
+      padding: 12px;
       display: flex;
       flex-direction: column;
       flex-grow: 1;
       justify-content: space-between;
+      gap: 10px;
     }
-    .grid-title {
+    .movie-name {
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.35;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      color: #ffffff;
+    }
+
+    .btn-action {
+      background: var(--btn-cinema);
+      color: #ffffff;
+      border: none;
+      padding: 9px 0;
+      border-radius: 10px;
       font-size: 13px;
       font-weight: 700;
-      margin-bottom: 4px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      cursor: pointer;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 4px 14px var(--btn-glow);
+      transition: all 0.2s ease;
     }
-    .grid-desc {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-bottom: 10px;
+    .btn-action:active {
+      opacity: 0.9;
+      transform: scale(0.98);
+      box-shadow: 0 2px 8px var(--btn-glow);
     }
-    .play-btn {
-      background: linear-gradient(90deg, #ff0055, #d60047);
-      color: #fff;
-      border: none;
-      padding: 8px;
-      border-radius: 8px;
-      font-size: 12px;
+
+    /* --- SERIAL ICHKI SAHIFASI --- */
+    #seriesView {
+      display: none;
+      max-width: 420px;
+      margin: 0 auto;
+    }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      color: #ffffff;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 13px;
       font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 14px;
+    }
+    .back-btn:active {
+      opacity: 0.8;
+    }
+    .series-header-card {
+      display: flex;
+      gap: 14px;
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      padding: 12px;
+      border-radius: 16px;
+      margin-bottom: 20px;
+    }
+    .series-header-card img {
+      width: 85px;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 10px;
+      background: #111;
+    }
+    .series-meta {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .series-meta h2 {
+      font-size: 16px;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 6px;
+    }
+    .series-meta p {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .episodes-title {
+      font-size: 15px;
+      font-weight: 800;
+      margin-bottom: 12px;
+      color: #ff0055;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .episodes-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .episode-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      padding: 12px 14px;
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .episode-card:active {
+      transform: scale(0.98);
+      border-color: #ff0055;
+    }
+    .ep-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .ep-num {
+      width: 28px;
+      height: 28px;
+      background: rgba(255, 0, 85, 0.15);
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
-      cursor: pointer;
-      box-shadow: 0 4px 12px var(--accent-glow);
+      font-size: 12px;
+      font-weight: bold;
+      color: #ff0055;
     }
-    .play-btn:active { transform: scale(0.97); }
+    .ep-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .ep-btn-play {
+      background: var(--btn-cinema);
+      color: #ffffff;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 800;
+      box-shadow: 0 2px 10px var(--btn-glow);
+    }
+
+    /* --- DONAT MODAL OYNASI --- */
+    .donate-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+    }
+    .donate-modal {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 420px;
+      background: #141824;
+      border-top: 1px solid var(--surface-border);
+      border-radius: 24px 24px 0 0;
+      padding: 20px 16px 28px 16px;
+      z-index: 101;
+      animation: slideUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    @keyframes slideUp {
+      from { bottom: -100%; }
+      to { bottom: 0; }
+    }
+    .donate-handle {
+      width: 36px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      margin: 0 auto 14px auto;
+    }
+    .donate-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .donate-header h3 {
+      font-size: 17px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .donate-close {
+      font-size: 18px;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+    .donate-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.4;
+      margin-bottom: 18px;
+    }
+    .card-box {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .card-info-left span {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 700;
+      display: block;
+      margin-bottom: 2px;
+    }
+    .card-number {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: #fff;
+    }
+    .btn-copy {
+      background: var(--brand-gradient);
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 2px 8px var(--brand-glow);
+    }
+    .payment-links {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .pay-btn-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      transition: opacity 0.2s;
+    }
+    .pay-btn-link:active {
+      opacity: 0.85;
+    }
+    .btn-click {
+      background: #0073ff;
+      box-shadow: 0 4px 12px rgba(0, 115, 255, 0.3);
+    }
+    .btn-payme {
+      background: #00cccc;
+      color: #0b0d14;
+      box-shadow: 0 4px 12px rgba(0, 204, 204, 0.3);
+    }
+
+    .empty-state {
+      grid-column: span 2;
+      text-align: center;
+      padding: 40px 10px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
 
   <!-- Top bar -->
-  <div class="top-nav">
-    <div class="logo"><i class="fa-solid fa-film"></i> LostFilm</div>
-    <div style="font-size: 12px; color: var(--text-muted);"><i class="fa-solid fa-bolt" style="color: #ffaa00;"></i> HD Sifat</div>
-  </div>
+  <header class="top-bar">
+    <div class="brand">
+      <div class="brand-icon">▶</div>
+      <div class="brand-title">LOST<span>FILM</span></div>
+    </div>
+    
+    <div class="lang-switcher">
+      <button class="lang-btn active" id="btn-uz" onclick="changeLang('uz')">UZ</button>
+      <button class="lang-btn" id="btn-ru" onclick="changeLang('ru')">RU</button>
+    </div>
+  </header>
 
-  <!-- Qidiruv -->
-  <div class="search-container">
+  <!-- ASOSIY KATALOG EKRANI -->
+  <div id="mainView">
+    <!-- BO'LIMLAR / FILTRLAR -->
+    <nav class="filter-tabs">
+      <button class="tab-item active" id="tab-all" onclick="setTab('all')">Barchasi</button>
+      <button class="tab-item" id="tab-kino" onclick="setTab('kino')">Kinolar</button>
+      <button class="tab-item" id="tab-serial" onclick="setTab('serial')">Seriallar</button>
+    </nav>
+
+    <!-- KINO VA SERIALLAR QATORIDAN KEYIN JOYLASHGAN DONAT TUGMASI -->
+    <div class="donate-sub-banner" onclick="openDonateModal()">
+      <div class="donate-sub-left">
+        <span>❤️</span>
+        <span id="bannerDonateText">Loyihani qo'llab-quvvatlash</span>
+      </div>
+      <div class="donate-sub-btn" id="bannerDonateBtn">Donat qilish ➔</div>
+    </div>
+
+    <!-- Qidiruv maydoni -->
     <div class="search-box">
-      <i class="fa-solid fa-magnifying-glass" style="color: var(--text-muted);"></i>
-      <input type="text" id="searchInput" placeholder="Kino yoki serial qidirish..." oninput="handleSearch()">
+      <input type="text" id="searchInput" class="search-input" placeholder="Kino yoki serial qidirish..." oninput="handleSearch()">
     </div>
+
+    <main class="catalog-grid" id="moviesGrid"></main>
   </div>
 
-  <!-- Bosh afisha (Banner) -->
-  <div class="hero-banner" id="heroBanner" style="display: none;">
-    <img id="heroImg" src="" alt="Banner">
-    <div class="hero-overlay">
-      <span class="hero-tag">🔥 Kunning Premyerasi</span>
-      <h3 id="heroTitle" style="font-size: 16px; margin-bottom: 6px;"></h3>
-      <button class="play-btn" style="width: 120px;" id="heroBtn"><i class="fa-solid fa-play"></i> Ko'rish</button>
+  <!-- SERIAL ICHKI QISMLARI EKRANI -->
+  <div id="seriesView">
+    <button class="back-btn" onclick="backToCatalog()">
+      ⬅ <span id="backText">Orqaga qaytish</span>
+    </button>
+    
+    <div class="series-header-card">
+      <img id="curSeriesPoster" src="" alt="Poster">
+      <div class="series-meta">
+        <h2 id="curSeriesTitle"></h2>
+        <p id="curSeriesCode"></p>
+      </div>
     </div>
+
+    <div class="episodes-title">
+      🎬 <span id="episodesHeading">Mavjud qismlar:</span>
+    </div>
+
+    <div class="episodes-list" id="episodesList"></div>
   </div>
 
-  <!-- 24 Soat ichida yangilar bo'limi -->
-  <div id="newSection" style="display: none;">
-    <div class="section-header">
-      <div class="section-title"><i class="fa-solid fa-fire-flame-curved"></i> Yangi premyeralar (24 soat)</div>
+  <!-- DONAT MODAL OYNASI -->
+  <div class="donate-overlay" id="donateOverlay" onclick="closeDonateModal()"></div>
+  <div class="donate-modal" id="donateModal">
+    <div class="donate-handle"></div>
+    <div class="donate-header">
+      <h3 id="donHead">❤️ Loyihani qo'llab-quvvatlash</h3>
+      <div class="donate-close" onclick="closeDonateModal()">✕</div>
     </div>
-    <div class="horizontal-scroll" id="newMoviesList"></div>
-  </div>
+    <p class="donate-desc" id="donDesc">
+      Kino va seriallarni muntazam va sifatli yuklab borishimiz uchun o'z hissangizni qo'shishingiz mumkin:
+    </p>
 
-  <!-- Barcha kinolar va seriallar -->
-  <div class="section-header" style="margin-top: 10px;">
-    <div class="section-title"><i class="fa-solid fa-layer-group"></i> Barcha filmlar</div>
+    <!-- Karta orqali donat -->
+    <div class="card-box">
+      <div class="card-info-left">
+        <span id="donCardLabel">Uzcard / Humo kartasi</span>
+        <div class="card-number" id="cardNumText">8600 0000 0000 0000</div>
+      </div>
+      <button class="btn-copy" id="btnCopy" onclick="copyCardNumber()">Nusxa olish</button>
+    </div>
+
+    <!-- Click va Payme to'lov tugmalari -->
+    <div class="payment-links">
+      <a href="https://my.click.uz/" target="_blank" class="pay-btn-link btn-click">
+        <span>Click orqali to'lash</span>
+        <b>➔</b>
+      </a>
+      <a href="https://payme.uz/" target="_blank" class="pay-btn-link btn-payme">
+        <span>Payme orqali to'lash</span>
+        <b>➔</b>
+      </a>
+    </div>
   </div>
-  <div class="movies-grid" id="allMoviesGrid"></div>
 
   <script>
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
-
-    // Serveringiz manzili
-    const API_URL = "http://SIZNING_SERVER_IP:8080/api/movies";
-    let globalMovies = [];
-
-    async function loadCatalog() {
-      try {
-        const res = await fetch(API_URL);
-        const data = await res.json();
-        globalMovies = data;
-        renderAll(data);
-      } catch (err) {
-        console.error("API xatolik:", err);
-      }
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      try { tg.ready(); tg.expand(); } catch (e) {}
     }
 
-    function renderAll(items) {
-      const newList = document.getElementById("newMoviesList");
-      const allGrid = document.getElementById("allMoviesGrid");
-      const newSec = document.getElementById("newSection");
-      const hero = document.getElementById("heroBanner");
+    const API_URL = "http://SIZNING_SERVER_IP:8080/api/movies";
 
-      newList.innerHTML = "";
-      allGrid.innerHTML = "";
+    let currentLang = localStorage.getItem('selected_lang') || 'uz';
+    let currentTab = 'all';
+    let searchQuery = '';
 
-      let hasNew = false;
+    let moviesData = [
+      {
+        code: 101,
+        title: "Avatar: Suv Yo'li",
+        type: "kino",
+        poster: "https://m.media-amazon.com/images/M/MV5BYjhiNjBlODctY2ZiOC00YjVlLWFlNzAtNTVhNzM1YjI1NzMxXkEyXkFqcGdeQXVyMjkwOTAyMDU@._V1_FMjpg_UX1000_.jpg"
+      },
+      {
+        code: 102,
+        title: "Gladiator 2",
+        type: "kino",
+        poster: "https://m.media-amazon.com/images/M/MV5BNDUyODAzNzktYzZhOC00YWY5LWE5YjctOTM4MmRkODEyNGYwXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg"
+      },
+      {
+        code: 201,
+        title: "Qashqirlar Makoni",
+        type: "serial",
+        poster: "https://m.media-amazon.com/images/M/MV5BNTBmZDI1YmUtNTQ2YS00YWI2LTkyYTctNjExZGRkMWY2MzdiXkEyXkFqcGdeQXVyMjg0MTMwNTU@._V1_.jpg",
+        episodes: [
+          { ep_num: 1, title: "1-qism: Boshlanish" },
+          { ep_num: 2, title: "2-qism: Pistirma" },
+          { ep_num: 3, title: "3-qism: Operatsiya" },
+          { ep_num: 4, title: "4-qism: Qasos" }
+        ]
+      },
+      {
+        code: 103,
+        title: "Forsaj 10",
+        type: "kino",
+        poster: "https://m.media-amazon.com/images/M/MV5BYzA2Nzk5MTAtNGYwNi00MmFiLWE2MWYtODEzZWQ1NzA0YzU2XkEyXkFqcGdeQXVyMTUzMTg2ODkz._V1_FMjpg_UX1000_.jpg"
+      }
+    ];
 
-      // Agar kinolar bo'lsa, 1-sini Bannerga qo'yamiz
-      if (items.length > 0) {
-        const topItem = items[0];
-        document.getElementById("heroImg").src = topItem.poster;
-        document.getElementById("heroTitle").innerText = topItem.title;
-        document.getElementById("heroBtn").onclick = () => sendMovie(topItem.code);
-        hero.style.display = "block";
+    const dict = {
+      uz: {
+        all: "Barchasi",
+        kino: "Kinolar",
+        serial: "Seriallar",
+        watchKino: "Ko'rish",
+        openSerial: "Qismlar ➔",
+        kinoBadge: "Film",
+        serialBadge: "Serial",
+        searchPlaceholder: "Kino yoki serial qidirish...",
+        empty: "Hali kinolar mavjud emas.",
+        back: "Orqaga qaytish",
+        episodesHead: "Barcha qismlar ro'yxati:",
+        partWord: "-qism",
+        playWord: "Ochish",
+        bannerDonateText: "Loyihani qo'llab-quvvatlash",
+        bannerDonateBtn: "Donat qilish ➔",
+        donHead: "❤️ Loyihani qo'llab-quvvatlash",
+        donDesc: "Kino va seriallarni muntazam va sifatli yuklab borishimiz uchun o'z hissangizni qo'shishingiz mumkin:",
+        donCardLabel: "Uzcard / Humo kartasi",
+        copyBtn: "Nusxa olish",
+        copiedBtn: "Nusxalandi! ✓"
+      },
+      ru: {
+        all: "Все",
+        kino: "Фильмы",
+        serial: "Сериалы",
+        watchKino: "Смотреть",
+        openSerial: "Серии ➔",
+        kinoBadge: "Фильм",
+        serialBadge: "Сериал",
+        searchPlaceholder: "Поиск фильмов или сериалов...",
+        empty: "Фильмы еще не добавлены.",
+        back: "Назад в каталог",
+        episodesHead: "Список всех серий:",
+        partWord: "-серия",
+        playWord: "Открыть",
+        bannerDonateText: "Поддержать проект",
+        bannerDonateBtn: "Донат ➔",
+        donHead: "❤️ Поддержка проекта",
+        donDesc: "Вы можете внести свой вклад в регулярное и качественное добавление новых фильмов и сериалов:",
+        donCardLabel: "Карта Uzcard / Humo",
+        copyBtn: "Скопировать",
+        copiedBtn: "Скопировано! ✓"
+      }
+    };
+
+    function haptic() {
+      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    }
+
+    function setTab(tab) {
+      haptic();
+      currentTab = tab;
+      document.getElementById('tab-all').classList.toggle('active', tab === 'all');
+      document.getElementById('tab-kino').classList.toggle('active', tab === 'kino');
+      document.getElementById('tab-serial').classList.toggle('active', tab === 'serial');
+      renderCatalog();
+    }
+
+    function handleSearch() {
+      searchQuery = document.getElementById("searchInput").value.toLowerCase();
+      renderCatalog();
+    }
+
+    function changeLang(lang) {
+      haptic();
+      currentLang = lang;
+      document.getElementById('btn-uz').classList.toggle('active', lang === 'uz');
+      document.getElementById('btn-ru').classList.toggle('active', lang === 'ru');
+
+      document.getElementById('tab-all').innerText = dict[lang].all;
+      document.getElementById('tab-kino').innerText = dict[lang].kino;
+      document.getElementById('tab-serial').innerText = dict[lang].serial;
+      document.getElementById('searchInput').placeholder = dict[lang].searchPlaceholder;
+      document.getElementById('backText').innerText = dict[lang].back;
+      document.getElementById('episodesHeading').innerText = dict[lang].episodesHead;
+      
+      // Donat matnlari
+      document.getElementById('bannerDonateText').innerText = dict[lang].bannerDonateText;
+      document.getElementById('bannerDonateBtn').innerText = dict[lang].bannerDonateBtn;
+      document.getElementById('donHead').innerText = dict[lang].donHead;
+      document.getElementById('donDesc').innerText = dict[lang].donDesc;
+      document.getElementById('donCardLabel').innerText = dict[lang].donCardLabel;
+      document.getElementById('btnCopy').innerText = dict[lang].copyBtn;
+
+      localStorage.setItem('selected_lang', lang);
+      renderCatalog();
+    }
+
+    function renderCatalog() {
+      const container = document.getElementById('moviesGrid');
+      container.innerHTML = "";
+
+      const filtered = moviesData.filter(item => {
+        const matchesTab = (currentTab === 'all') || (item.type === currentTab);
+        const matchesSearch = item.title.toLowerCase().includes(searchQuery);
+        return matchesTab && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="empty-state">${dict[currentLang].empty}</div>`;
+        return;
       }
 
-      items.forEach(item => {
-        // Yangi kinolar (Gorizontal ro'yxat)
-        if (item.is_new) {
-          hasNew = true;
-          newList.innerHTML += `
-            <div class="story-card" onclick="sendMovie(${item.code})">
-              <span class="new-badge">24 SOAT</span>
-              <img src="${item.poster}" alt="${item.title}">
-              <div style="padding: 6px; font-size: 11px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                ${item.title}
-              </div>
-            </div>
-          `;
-        }
+      filtered.forEach(item => {
+        const isSerial = item.type === 'serial';
+        const typeClass = isSerial ? 'type-serial' : 'type-kino';
+        const typeText = isSerial ? dict[currentLang].serialBadge : dict[currentLang].kinoBadge;
+        const btnText = isSerial ? dict[currentLang].openSerial : dict[currentLang].watchKino;
+        const clickAction = isSerial ? `openSeriesDetails(${item.code})` : `sendToBot(${item.code})`;
 
-        // Asosiy Grid kartochkasi
-        allGrid.innerHTML += `
-          <div class="grid-card">
-            <img src="${item.poster}" alt="${item.title}">
-            <div class="grid-info">
-              <div>
-                <div class="grid-title">${item.title}</div>
-                <div class="grid-desc">${item.type === 'serial' ? '📺 Serial' : '🎬 Kino'} • Kod: ${item.code}</div>
-              </div>
-              <button class="play-btn" onclick="sendMovie(${item.code})">
-                <i class="fa-solid fa-play"></i> Ko'rish
+        container.innerHTML += `
+          <div class="movie-card" onclick="${clickAction}">
+            <div class="poster-box">
+              <span class="type-tag ${typeClass}">${typeText}</span>
+              <span class="code-tag">#${item.code}</span>
+              <img src="${item.poster}" alt="${item.title}">
+            </div>
+            <div class="card-details">
+              <div class="movie-name">${item.title}</div>
+              <button class="btn-action">
+                ${btnText}
               </button>
             </div>
           </div>
         `;
       });
-
-      if (hasNew) newSec.style.display = "block";
     }
 
-    function handleSearch() {
-      const q = document.getElementById("searchInput").value.toLowerCase();
-      const filtered = globalMovies.filter(m => m.title.toLowerCase().includes(q));
-      renderAll(filtered);
+    function openSeriesDetails(seriesCode) {
+      haptic();
+      const series = moviesData.find(s => s.code === seriesCode);
+      if (!series) return;
+
+      document.getElementById('curSeriesPoster').src = series.poster;
+      document.getElementById('curSeriesTitle').innerText = series.title;
+      document.getElementById('curSeriesCode').innerText = "Kod: " + series.code;
+
+      const listContainer = document.getElementById('episodesList');
+      listContainer.innerHTML = "";
+
+      const episodes = series.episodes || [
+        { ep_num: 1, title: "1-qism" }
+      ];
+
+      episodes.forEach(ep => {
+        listContainer.innerHTML += `
+          <div class="episode-card" onclick="sendEpisodeToBot(${series.code}, ${ep.ep_num})">
+            <div class="ep-left">
+              <div class="ep-num">${ep.ep_num}</div>
+              <div class="ep-title">${ep.title || (ep.ep_num + dict[currentLang].partWord)}</div>
+            </div>
+            <button class="ep-btn-play">▶ ${dict[currentLang].playWord}</button>
+          </div>
+        `;
+      });
+
+      document.getElementById('mainView').style.display = 'none';
+      document.getElementById('seriesView').style.display = 'block';
+      window.scrollTo(0, 0);
     }
 
-    function sendMovie(code) {
-      tg.sendData(code.toString());
+    function backToCatalog() {
+      haptic();
+      document.getElementById('seriesView').style.display = 'none';
+      document.getElementById('mainView').style.display = 'block';
     }
 
-    loadCatalog();
+    function sendToBot(code) {
+      haptic();
+      if (tg && tg.sendData) {
+        tg.sendData(code.toString());
+      } else {
+        alert("Kino kodi botga yuborildi: " + code);
+      }
+    }
+
+    function sendEpisodeToBot(seriesCode, epNum) {
+      haptic();
+      const sendValue = `ep_${seriesCode}_${epNum}`;
+      if (tg && tg.sendData) {
+        tg.sendData(sendValue);
+      } else {
+        alert("Serial qismi botga yuborildi: " + sendValue);
+      }
+    }
+
+    /* --- DONAT MODAL OCHISH / YOPISH --- */
+    function openDonateModal() {
+      haptic();
+      document.getElementById('donateOverlay').style.display = 'block';
+      document.getElementById('donateModal').style.display = 'block';
+    }
+
+    function closeDonateModal() {
+      haptic();
+      document.getElementById('donateOverlay').style.display = 'none';
+      document.getElementById('donateModal').style.display = 'none';
+    }
+
+    function copyCardNumber() {
+      haptic();
+      const rawNum = document.getElementById('cardNumText').innerText.replace(/\s+/g, '');
+      navigator.clipboard.writeText(rawNum).then(() => {
+        const btn = document.getElementById('btnCopy');
+        btn.innerText = dict[currentLang].copiedBtn;
+        btn.style.background = "#00ff66";
+        btn.style.color = "#090c14";
+        setTimeout(() => {
+          btn.innerText = dict[currentLang].copyBtn;
+          btn.style.background = "var(--brand-gradient)";
+          btn.style.color = "#fff";
+        }, 2000);
+      });
+    }
+
+    async function fetchMovies() {
+      try {
+        const response = await fetch(API_URL);
+        const data = await response.json();
+        if (data && data.length > 0) {
+          moviesData = data;
+          renderCatalog();
+        }
+      } catch (e) {
+        console.log("Server API bilan aloqa yo'q, lokal rejimda ishlamoqda.");
+      }
+    }
+
+    changeLang(currentLang);
+    fetchMovies();
   </script>
 </body>
 </html>
