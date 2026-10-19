@@ -640,29 +640,18 @@
     </div>
 
     <!-- Click va Payme to'g'ridan-to'g'ri o'tkazma tugmalari -->
-   function openClickApp() {
-      haptic();
-      // Click rasmiy universal transfer havolasi:
-      const clickUrl = "https://my.click.uz/clicka/p2p?card=" + MY_CARD;
+    <div class="payment-links">
+      <button class="pay-btn-link btn-click" onclick="openClickApp()">
+        <span id="txtClickPay">Click ilovasida to'lash</span>
+        <b>➔</b>
+      </button>
 
-      if (window.Telegram?.WebApp?.openLink) {
-        window.Telegram.WebApp.openLink(clickUrl);
-      } else {
-        window.open(clickUrl, "_blank");
-      }
-    }
-
-     function openPaymeApp() {
-      haptic();
-      // Payme rasmiy universal transfer havolasi:
-      const paymeUrl = "https://payme.uz/fallback/card/" + MY_CARD;
-
-      if (window.Telegram?.WebApp?.openLink) {
-        window.Telegram.WebApp.openLink(paymeUrl);
-      } else {
-        window.open(paymeUrl, "_blank");
-      }
-    }
+      <button class="pay-btn-link btn-payme" onclick="openPaymeApp()">
+        <span id="txtPaymePay">Payme ilovasida to'lash</span>
+        <b>➔</b>
+      </button>
+    </div>
+  </div>
 
   <script>
     const tg = window.Telegram?.WebApp;
@@ -671,7 +660,7 @@
     }
 
     // ------------------------------------------------------------------
-    // BU YERGA O'ZINGIZNING KARTA RAQAMINGIZNI PROBELSIZ YOZASIZ:
+    // BU YERGA O'ZINGIZNING KARTA RAQAMINGIZNI PROBELSIZ YOZING:
     const MY_CARD = "9860170117145087";
     // ------------------------------------------------------------------
 
@@ -911,7 +900,6 @@
     /* --- DONAT MODAL BOSHQARUVI --- */
     function openDonateModal() {
       haptic();
-      // Karta raqamini probelli chiroyli ko'rsatish
       const formatted = MY_CARD.replace(/(\d{4})(?=\d)/g, '$1 ');
       document.getElementById('cardNumDisplay').innerText = formatted;
 
@@ -940,43 +928,29 @@
       });
     }
 
-    /* --- CLICK ILOVASINI TO'G'RIDAN-TO'G'RI OCHISH --- */
+    /* --- CLICK UNIVERSAL HAVOLASI --- */
     function openClickApp() {
       haptic();
-      const clickDeepLink = "clickuz://transfer?card=" + MY_CARD;
-      const clickWebFallback = "https://click.uz/p2p/" + MY_CARD;
+      // Rasmiy Click universal transfer havolasi
+      const clickUrl = "https://my.click.uz/clicka/p2p?card=" + MY_CARD;
 
       if (window.Telegram?.WebApp?.openLink) {
-        try {
-          window.Telegram.WebApp.openLink(clickDeepLink);
-        } catch (e) {
-          window.Telegram.WebApp.openLink(clickWebFallback);
-        }
+        window.Telegram.WebApp.openLink(clickUrl);
       } else {
-        window.location.href = clickDeepLink;
-        setTimeout(() => {
-          window.location.href = clickWebFallback;
-        }, 1500);
+        window.open(clickUrl, "_blank");
       }
     }
 
-    /* --- PAYME ILOVASINI TO'G'RIDAN-TO'G'RI OCHISH --- */
+    /* --- PAYME UNIVERSAL HAVOLASI --- */
     function openPaymeApp() {
       haptic();
-      const paymeDeepLink = "payme://p2p?card=" + MY_CARD;
-      const paymeWebFallback = "https://checkout.paycom.uz/card/" + MY_CARD;
+      // Rasmiy Payme universal transfer havolasi
+      const paymeUrl = "https://payme.uz/fallback/card/" + MY_CARD;
 
       if (window.Telegram?.WebApp?.openLink) {
-        try {
-          window.Telegram.WebApp.openLink(paymeDeepLink);
-        } catch (e) {
-          window.Telegram.WebApp.openLink(paymeWebFallback);
-        }
+        window.Telegram.WebApp.openLink(paymeUrl);
       } else {
-        window.location.href = paymeDeepLink;
-        setTimeout(() => {
-          window.location.href = paymeWebFallback;
-        }, 1500);
+        window.open(paymeUrl, "_blank");
       }
     }
 
