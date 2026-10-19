@@ -103,7 +103,7 @@
       box-shadow: 0 2px 8px rgba(255, 255, 255, 0.25);
     }
 
-    /* Bo'limlar / Filtrlar (Faqat Barchasi, Kinolar, Seriallar) */
+    /* Bo'limlar / Filtrlar */
     .filter-tabs {
       display: flex;
       gap: 8px;
@@ -133,7 +133,7 @@
       box-shadow: 0 4px 14px var(--white-glow);
     }
 
-    /* FILTRLAR PASTIDAGI DONAT BANNER-TUGMASI */
+    /* Donat banneri */
     .donate-sub-banner {
       max-width: 420px;
       margin: 0 auto 14px auto;
@@ -514,6 +514,7 @@
       cursor: pointer;
       box-shadow: 0 2px 8px var(--brand-glow);
     }
+
     .payment-links {
       display: flex;
       flex-direction: column;
@@ -523,12 +524,14 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 14px;
+      padding: 13px 14px;
       border-radius: 12px;
-      text-decoration: none;
       color: #fff;
       font-size: 14px;
       font-weight: 700;
+      border: none;
+      cursor: pointer;
+      width: 100%;
       transition: opacity 0.2s;
     }
     .pay-btn-link:active {
@@ -577,7 +580,7 @@
       <button class="tab-item" id="tab-serial" onclick="setTab('serial')">Seriallar</button>
     </nav>
 
-    <!-- KINO VA SERIALLAR QATORIDAN KEYIN JOYLASHGAN DONAT TUGMASI -->
+    <!-- DONAT BANNER-TUGMASI -->
     <div class="donate-sub-banner" onclick="openDonateModal()">
       <div class="donate-sub-left">
         <span>❤️</span>
@@ -627,25 +630,26 @@
       Kino va seriallarni muntazam va sifatli yuklab borishimiz uchun o'z hissangizni qo'shishingiz mumkin:
     </p>
 
-    <!-- Karta orqali donat -->
+    <!-- Karta raqami qutisi -->
     <div class="card-box">
       <div class="card-info-left">
         <span id="donCardLabel">Uzcard / Humo kartasi</span>
-        <div class="card-number" id="cardNumText">9860 1701 1714 5087</div>
+        <div class="card-number" id="cardNumDisplay">9860 1701 1714 5087</div>
       </div>
       <button class="btn-copy" id="btnCopy" onclick="copyCardNumber()">Nusxa olish</button>
     </div>
 
-    <!-- Click va Payme to'lov tugmalari -->
+    <!-- Click va Payme to'g'ridan-to'g'ri o'tkazma tugmalari -->
     <div class="payment-links">
-      <a href="https://my.click.uz/" target="_blank" class="pay-btn-link btn-click">
-        <span>Click orqali to'lash</span>
+      <button class="pay-btn-link btn-click" onclick="openClickApp()">
+        <span id="txtClickPay">Click orqali to'lash</span>
         <b>➔</b>
-      </a>
-      <a href="https://payme.uz/" target="_blank" class="pay-btn-link btn-payme">
-        <span>Payme orqali to'lash</span>
+      </button>
+
+      <button class="pay-btn-link btn-payme" onclick="openPaymeApp()">
+        <span id="txtPaymePay">Payme orqali to'lash</span>
         <b>➔</b>
-      </a>
+      </button>
     </div>
   </div>
 
@@ -654,6 +658,11 @@
     if (tg) {
       try { tg.ready(); tg.expand(); } catch (e) {}
     }
+
+    // ------------------------------------------------------------------
+    // BU YERGA O'ZINGIZNING KARTA RAQAMINGIZNI PROBELSIZ YOZASIZ:
+    const MY_CARD = "9860170117145087";
+    // ------------------------------------------------------------------
 
     const API_URL = "http://SIZNING_SERVER_IP:8080/api/movies";
 
@@ -715,7 +724,9 @@
         donDesc: "Kino va seriallarni muntazam va sifatli yuklab borishimiz uchun o'z hissangizni qo'shishingiz mumkin:",
         donCardLabel: "Uzcard / Humo kartasi",
         copyBtn: "Nusxa olish",
-        copiedBtn: "Nusxalandi! ✓"
+        copiedBtn: "Nusxalandi! ✓",
+        txtClickPay: "Click ilovasida to'lash",
+        txtPaymePay: "Payme ilovasida to'lash"
       },
       ru: {
         all: "Все",
@@ -737,7 +748,9 @@
         donDesc: "Вы можете внести свой вклад в регулярное и качественное добавление новых фильмов и сериалов:",
         donCardLabel: "Карта Uzcard / Humo",
         copyBtn: "Скопировать",
-        copiedBtn: "Скопировано! ✓"
+        copiedBtn: "Скопировано! ✓",
+        txtClickPay: "Оплатить через Click",
+        txtPaymePay: "Оплатить через Payme"
       }
     };
 
@@ -779,6 +792,8 @@
       document.getElementById('donDesc').innerText = dict[lang].donDesc;
       document.getElementById('donCardLabel').innerText = dict[lang].donCardLabel;
       document.getElementById('btnCopy').innerText = dict[lang].copyBtn;
+      document.getElementById('txtClickPay').innerText = dict[lang].txtClickPay;
+      document.getElementById('txtPaymePay').innerText = dict[lang].txtPaymePay;
 
       localStorage.setItem('selected_lang', lang);
       renderCatalog();
@@ -882,9 +897,13 @@
       }
     }
 
-    /* --- DONAT MODAL OCHISH / YOPISH --- */
+    /* --- DONAT MODAL BOSHQARUVI --- */
     function openDonateModal() {
       haptic();
+      // Karta raqamini probelli chiroyli ko'rsatish
+      const formatted = MY_CARD.replace(/(\d{4})(?=\d)/g, '$1 ');
+      document.getElementById('cardNumDisplay').innerText = formatted;
+
       document.getElementById('donateOverlay').style.display = 'block';
       document.getElementById('donateModal').style.display = 'block';
     }
@@ -897,8 +916,7 @@
 
     function copyCardNumber() {
       haptic();
-      const rawNum = document.getElementById('cardNumText').innerText.replace(/\s+/g, '');
-      navigator.clipboard.writeText(rawNum).then(() => {
+      navigator.clipboard.writeText(MY_CARD).then(() => {
         const btn = document.getElementById('btnCopy');
         btn.innerText = dict[currentLang].copiedBtn;
         btn.style.background = "#00ff66";
@@ -909,6 +927,46 @@
           btn.style.color = "#fff";
         }, 2000);
       });
+    }
+
+    /* --- CLICK ILOVASINI TO'G'RIDAN-TO'G'RI OCHISH --- */
+    function openClickApp() {
+      haptic();
+      const clickDeepLink = "clickuz://transfer?card=" + MY_CARD;
+      const clickWebFallback = "https://click.uz/p2p/" + MY_CARD;
+
+      if (window.Telegram?.WebApp?.openLink) {
+        try {
+          window.Telegram.WebApp.openLink(clickDeepLink);
+        } catch (e) {
+          window.Telegram.WebApp.openLink(clickWebFallback);
+        }
+      } else {
+        window.location.href = clickDeepLink;
+        setTimeout(() => {
+          window.location.href = clickWebFallback;
+        }, 1500);
+      }
+    }
+
+    /* --- PAYME ILOVASINI TO'G'RIDAN-TO'G'RI OCHISH --- */
+    function openPaymeApp() {
+      haptic();
+      const paymeDeepLink = "payme://p2p?card=" + MY_CARD;
+      const paymeWebFallback = "https://checkout.paycom.uz/card/" + MY_CARD;
+
+      if (window.Telegram?.WebApp?.openLink) {
+        try {
+          window.Telegram.WebApp.openLink(paymeDeepLink);
+        } catch (e) {
+          window.Telegram.WebApp.openLink(paymeWebFallback);
+        }
+      } else {
+        window.location.href = paymeDeepLink;
+        setTimeout(() => {
+          window.location.href = paymeWebFallback;
+        }, 1500);
+      }
     }
 
     async function fetchMovies() {
