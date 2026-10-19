@@ -640,18 +640,29 @@
     </div>
 
     <!-- Click va Payme to'g'ridan-to'g'ri o'tkazma tugmalari -->
-    <div class="payment-links">
-      <button class="pay-btn-link btn-click" onclick="openClickApp()">
-        <span id="txtClickPay">Click orqali to'lash</span>
-        <b>➔</b>
-      </button>
+   function openClickApp() {
+      haptic();
+      // Click rasmiy universal transfer havolasi:
+      const clickUrl = "https://my.click.uz/clicka/p2p?card=" + MY_CARD;
 
-      <button class="pay-btn-link btn-payme" onclick="openPaymeApp()">
-        <span id="txtPaymePay">Payme orqali to'lash</span>
-        <b>➔</b>
-      </button>
-    </div>
-  </div>
+      if (window.Telegram?.WebApp?.openLink) {
+        window.Telegram.WebApp.openLink(clickUrl);
+      } else {
+        window.open(clickUrl, "_blank");
+      }
+    }
+
+     function openPaymeApp() {
+      haptic();
+      // Payme rasmiy universal transfer havolasi:
+      const paymeUrl = "https://payme.uz/fallback/card/" + MY_CARD;
+
+      if (window.Telegram?.WebApp?.openLink) {
+        window.Telegram.WebApp.openLink(paymeUrl);
+      } else {
+        window.open(paymeUrl, "_blank");
+      }
+    }
 
   <script>
     const tg = window.Telegram?.WebApp;
