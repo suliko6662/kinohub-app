@@ -1588,7 +1588,10 @@
     // CORSProxy.io yordamida ishonchli ulanish
     async function fetchMovies() {
       try {
-        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(API_URL)}`;
+        // Vaqt tamg'asi (?t=...) orqali proksi keshini chetlab o'tamiz
+        const freshApiUrl = API_URL + '?t=' + new Date().getTime();
+        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(freshApiUrl)}`;
+        
         const response = await fetch(proxyUrl, { cache: "no-store" });
         if (response.ok) {
           const data = await response.json();
@@ -1603,6 +1606,7 @@
         console.warn("Serverga ulanib bo'lmadi, zaxira ma'lumotlar bilan ishlash davom etadi.", e);
       }
     }
+
 
     changeLang(currentLang);
     renderHeroSlider();
