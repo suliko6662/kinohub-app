@@ -1585,10 +1585,10 @@
       });
     }
 
-    // TO'G'RILANGAN FETCH FUNKSIYASI (Serverdan to'g'ridan-to'g'ri bazadagi kinolarni olib keladi)
+    // CORSProxy.io yordamida ishonchli ulanish
     async function fetchMovies() {
       try {
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(API_URL)}`;
+        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(API_URL)}`;
         const response = await fetch(proxyUrl, { cache: "no-store" });
         if (response.ok) {
           const data = await response.json();
