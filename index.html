@@ -1535,26 +1535,26 @@
     }
 
     // CORSProxy.io yordamida ishonchli ulanish
-    async function fetchMovies() {
-      try {
-        // Vaqt tamg'asi (?t=...) orqali proksi keshini chetlab o'tamiz
-        const freshApiUrl = API_URL + '?t=' + new Date().getTime();
-        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(freshApiUrl)}`;
-        
-        const response = await fetch(proxyUrl, { cache: "no-store" });
-        if (response.ok) {
-          const data = await response.json();
-          if (Array.isArray(data) && data.length > 0) {
-            moviesData = data;
-            renderCatalog();
-            renderHeroSlider();
-            console.log("Serverdan kinolar muvaffaqiyatli yuklandi:", data.length);
-          }
-        }
-      } catch (e) {
-        console.warn("Serverga ulanib bo'lmadi, zaxira ma'lumotlar bilan ishlash davom etadi.", e);
+  
+async function fetchMovies() {
+  try {
+    // Hech qanday proksisiz, to'g'ridan-to'g'ri Cloudflare havolasiga so'rov yuboramiz
+    const response = await fetch(API_URL, { cache: "no-store" });
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (Array.isArray(data) && data.length > 0) {
+        moviesData = data;
+        renderCatalog();
+        renderHeroSlider();
+        console.log("Serverdan kinolar muvaffaqiyatli yuklandi:", data.length);
       }
     }
+  } catch (e) {
+    console.warn("Serverga ulanib bo'lmadi:", e);
+  }
+}
+
 
 
     changeLang(currentLang);
