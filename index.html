@@ -1073,58 +1073,7 @@
 
     let favorites = JSON.parse(localStorage.getItem('lostfilm_favs') || "[]");
 
-    let moviesData = [
-      {
-        code: 101,
-        title: "Avatar: Suv Yo'li",
-        type: "kino",
-        genre: "scifi",
-        rating: "7.8",
-        year: "2022",
-        views: 3420,
-        desc: "Jeyk Salli va Neytiri oilasi Pandoraning sirli suv hududlariga sayohat qilishadi va yangi xavf-xatarlarga duch kelishadi.",
-        poster: "https://m.media-amazon.com/images/M/MV5BYjhiNjBlODctY2ZiOC00YjVlLWFlNzAtNTVhNzM1YjI1NzMxXkEyXkFqcGdeQXVyMjkwOTAyMDU@._V1_FMjpg_UX1000_.jpg"
-      },
-      {
-        code: 102,
-        title: "Gladiator 2",
-        type: "kino",
-        genre: "action",
-        rating: "7.2",
-        year: "2024",
-        views: 1890,
-        desc: "Rim imperiyasining shafqatsiz davrida yangi qahramon Kolizey maydoniga qadam qo'yib, ozodlik va shon-sharaf uchun jang qiladi.",
-        poster: "https://m.media-amazon.com/images/M/MV5BNDUyODAzNzktYzZhOC00YWY5LWE5YjctOTM4MmRkODEyNGYwXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg"
-      },
-      {
-        code: 201,
-        title: "Qashqirlar Makoni",
-        type: "serial",
-        genre: "crime",
-        rating: "8.9",
-        year: "Serial",
-        views: 9240,
-        desc: "Polat Alemdar davlat xavfsizligi va mafiya to'dalariga qarshi kurash olib boradigan afsonaviy kriminal serial.",
-        poster: "https://m.media-amazon.com/images/M/MV5BNTBmZDI1YmUtNTQ2YS00YWI2LTkyYTctNjExZGRkMWY2MzdiXkEyXkFqcGdeQXVyMjg0MTMwNTU@._V1_.jpg",
-        episodes: [
-          { ep_num: 1, title: "1-qism: Boshlanish" },
-          { ep_num: 2, title: "2-qism: Pistirma" },
-          { ep_num: 3, title: "3-qism: Operatsiya" },
-          { ep_num: 4, title: "4-qism: Qasos" }
-        ]
-      },
-      {
-        code: 103,
-        title: "Forsaj 10",
-        type: "kino",
-        genre: "action",
-        rating: "6.0",
-        year: "2023",
-        views: 2750,
-        desc: "Dom Toretto va uning tezkor jamoasi o'tmishdan qaytgan xavfli dushmanning qasos rejasiga qarshi poyga qiladilar.",
-        poster: "https://m.media-amazon.com/images/M/MV5BYzA2Nzk5MTAtNGYwNi00MmFiLWE2MWYtODEzZWQ1NzA0YzU2XkEyXkFqcGdeQXVyMTUzMTg2ODkz._V1_FMjpg_UX1000_.jpg"
-      }
-    ];
+    let moviesData = [ ];
 
     const genresList = [
       { key: 'all', icon: '✨', uz: 'Barchasi', ru: 'Все' },
