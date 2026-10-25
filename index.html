@@ -1,1565 +1,525 @@
-<!DOCTYPE html>
-<html lang="uz">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="referrer" content="no-referrer">
-  <title>LostFilm</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    :root {
-      --bg: #07090e;
-      --surface: rgba(16, 21, 33, 0.65);
-      --surface-card: rgba(18, 24, 38, 0.72);
-      --surface-border: rgba(255, 255, 255, 0.1);
-      --brand-color: #f39c12;
-      --brand-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-      --brand-glow: rgba(245, 158, 11, 0.35);
-      --btn-cinema: linear-gradient(135deg, #ff0055 0%, #d60047 100%);
-      --btn-glow: rgba(255, 0, 85, 0.4);
-      --white-glow: rgba(255, 255, 255, 0.18);
-      --text-main: #ffffff;
-      --text-muted: #94a3b8;
-    }
+import os
+import asyncio
+import logging
+import sqlite3
+from aiohttp import web
+from aiogram import Bot, Dispatcher, F, types
+from aiogram.filters.command import Command
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.types import WebAppInfo
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
+BOT_TOKEN = "8891619718:AAEz8zvrKIW0KT0dWI5MnQ0isj467xgMvnI"
+ADMIN_USERNAME = "@Dark_7777"
 
-    body {
-      background-color: var(--bg);
-      color: var(--text-main);
-      padding: 16px;
-      padding-bottom: 50px;
-      overflow-x: hidden;
-      min-height: 100vh;
-      position: relative;
-    }
+# ⚠️ DIQQAT: Netlify yoki Vercel bergan URL manzilni shu yerga yozasiz!
+MINI_APP_URL = "https://zesty-sfogliatella-90271b.netlify.app"
 
-    /* Ambient nurlar */
-    .ambient-canvas {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-      overflow: hidden;
-    }
-    .orb-top {
-      position: absolute;
-      top: -140px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 420px;
-      height: 420px;
-      background: radial-gradient(circle, rgba(243, 156, 18, 0.16) 0%, transparent 75%);
-      filter: blur(45px);
-    }
-    .orb-red {
-      position: absolute;
-      bottom: 8%;
-      right: -80px;
-      width: 360px;
-      height: 360px;
-      background: radial-gradient(circle, rgba(255, 0, 85, 0.08) 0%, transparent 70%);
-      filter: blur(60px);
-    }
+bot = Bot(token=BOT_TOKEN)
+dp = Dispatcher()
 
-    .app-wrapper {
-      position: relative;
-      z-index: 1;
-    }
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "bot_database.db")
 
-    /* Top Bar */
-    .top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 14px;
-      max-width: 420px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-    }
-    .brand:active {
-      transform: scale(0.96);
-    }
-
-    @keyframes iconSpinY {
-      0% { transform: rotateY(0deg); }
-      100% { transform: rotateY(360deg); }
-    }
-
-    .brand-icon-wrap {
-      perspective: 800px;
-    }
-
-    .brand-icon {
-      width: 34px;
-      height: 34px;
-      background: var(--brand-gradient);
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 900;
-      font-size: 14px;
-      color: #fff;
-      box-shadow: 0 4px 14px var(--brand-glow);
-      transform-style: preserve-3d;
-      animation: iconSpinY 5s linear infinite;
-    }
-
-    .brand-title {
-      font-size: 20px;
-      font-weight: 900;
-      letter-spacing: 0.5px;
-      color: #ffffff;
-      white-space: nowrap;
-    }
-    .brand-title span {
-      color: var(--brand-color);
-    }
-
-    .lang-switcher {
-      display: flex;
-      gap: 4px;
-      background: rgba(18, 24, 38, 0.75);
-      backdrop-filter: blur(12px);
-      padding: 4px;
-      border-radius: 20px;
-      border: 1px solid var(--surface-border);
-    }
-    .lang-btn {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      font-size: 11px;
-      font-weight: 700;
-      padding: 5px 12px;
-      border-radius: 16px;
-      cursor: pointer;
-      transition: all 0.25s ease;
-    }
-    .lang-btn.active {
-      background: #ffffff;
-      color: #090c14;
-      box-shadow: 0 2px 8px rgba(255, 255, 255, 0.25);
-    }
-
-    /* Hero Banner */
-    .hero-container {
-      position: relative;
-      max-width: 420px;
-      height: 220px;
-      margin: 0 auto 16px auto;
-      border-radius: 20px;
-      overflow: hidden;
-      border: 1px solid var(--surface-border);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-    }
-    .hero-slide {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      transition: opacity 0.8s ease-in-out;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      padding: 16px;
-    }
-    .hero-slide.active { opacity: 1; }
-    .hero-bg-img {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      z-index: 0;
-    }
-    .hero-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(180deg, rgba(7,9,14,0.1) 0%, rgba(7,9,14,0.92) 90%);
-      z-index: 1;
-    }
-    .hero-content {
-      position: relative;
-      z-index: 2;
-    }
-    .hero-tag {
-      background: var(--brand-gradient);
-      color: #fff;
-      font-size: 9px;
-      font-weight: 900;
-      padding: 3px 8px;
-      border-radius: 6px;
-      display: inline-block;
-      margin-bottom: 6px;
-      text-transform: uppercase;
-    }
-    .hero-title {
-      font-size: 17px;
-      font-weight: 900;
-      margin-bottom: 4px;
-      text-shadow: 0 2px 8px rgba(0,0,0,0.8);
-    }
-    .hero-meta {
-      font-size: 11px;
-      color: #cbd5e1;
-      margin-bottom: 10px;
-    }
-    .hero-dots {
-      position: absolute;
-      top: 12px;
-      right: 14px;
-      display: flex;
-      gap: 5px;
-      z-index: 3;
-    }
-    .hero-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.3);
-      transition: all 0.3s;
-    }
-    .hero-dot.active {
-      width: 16px;
-      border-radius: 4px;
-      background: #f59e0b;
-    }
-
-    /* Donat banneri */
-    .donate-sub-banner {
-      max-width: 420px;
-      margin: 0 auto 14px auto;
-      background: linear-gradient(90deg, rgba(255, 0, 85, 0.12) 0%, rgba(255, 0, 85, 0.04) 100%);
-      border: 1px dashed rgba(255, 0, 85, 0.35);
-      backdrop-filter: blur(10px);
-      border-radius: 14px;
-      padding: 9px 14px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    .donate-sub-banner:active {
-      transform: scale(0.98);
-      background: rgba(255, 0, 85, 0.2);
-    }
-    .donate-sub-left {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 12px;
-      font-weight: 700;
-      color: #ff4785;
-    }
-    .donate-sub-btn {
-      background: var(--btn-cinema);
-      color: #fff;
-      font-size: 11px;
-      font-weight: 800;
-      padding: 5px 10px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px var(--btn-glow);
-    }
-
-    /* Qidiruv */
-    .search-box {
-      max-width: 420px;
-      margin: 0 auto 12px auto;
-    }
-    .search-input {
-      width: 100%;
-      padding: 11px 14px;
-      background: rgba(18, 24, 38, 0.65);
-      border: 1px solid var(--surface-border);
-      border-radius: 12px;
-      color: #fff;
-      font-size: 13px;
-      outline: none;
-      backdrop-filter: blur(12px);
-    }
-    .search-input:focus {
-      border-color: var(--brand-color);
-      box-shadow: 0 0 15px rgba(243, 156, 18, 0.25);
-    }
-
-    /* 2 Qatorli Filtrlar */
-    .tabs-wrapper {
-      max-width: 420px;
-      margin: 0 auto 16px auto;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .tabs-row {
-      display: flex;
-      gap: 8px;
-      width: 100%;
-    }
-    .tab-item {
-      flex: 1;
-      padding: 10px 6px;
-      background: rgba(18, 24, 38, 0.75);
-      border: 1px solid var(--surface-border);
-      color: var(--text-muted);
-      font-size: 13px;
-      font-weight: 700;
-      border-radius: 12px;
-      cursor: pointer;
-      text-align: center;
-      transition: all 0.25s ease;
-      backdrop-filter: blur(10px);
-    }
-    .tab-item.active {
-      background: #ffffff;
-      color: #090c14;
-      border-color: #ffffff;
-      box-shadow: 0 4px 12px var(--white-glow);
-    }
-    .tab-item.genre-active {
-      background: var(--brand-gradient);
-      color: #ffffff;
-      border-color: transparent;
-      box-shadow: 0 4px 14px var(--brand-glow);
-    }
-
-    /* Katalog panjarasi */
-    .catalog-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 14px;
-      max-width: 420px;
-      margin: 0 auto;
-    }
-
-    .movie-card {
-      background: var(--surface-card);
-      border: 1px solid var(--surface-border);
-      border-radius: 16px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      backdrop-filter: blur(16px);
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
-      transition: transform 0.2s ease, border-color 0.2s ease;
-    }
-    .movie-card:active {
-      transform: scale(0.97);
-      border-color: #ff0055;
-    }
-
-    .poster-box {
-      width: 100%;
-      height: 195px;
-      position: relative;
-      background: #0f131d;
-      overflow: hidden;
-    }
-    .poster-box img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-
-    .type-tag {
-      position: absolute;
-      top: 8px;
-      left: 8px;
-      padding: 3px 8px;
-      border-radius: 6px;
-      font-size: 10px;
-      font-weight: 800;
-      backdrop-filter: blur(8px);
-      text-transform: uppercase;
-    }
-    .type-kino {
-      background: rgba(255, 0, 85, 0.25);
-      border: 1px solid rgba(255, 0, 85, 0.5);
-      color: #ff3377;
-    }
-    .type-serial {
-      background: rgba(0, 229, 255, 0.2);
-      border: 1px solid rgba(0, 229, 255, 0.4);
-      color: #38bdf8;
-    }
-
-    .fav-btn {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      width: 28px;
-      height: 28px;
-      background: rgba(9, 12, 20, 0.7);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 13px;
-      backdrop-filter: blur(6px);
-      transition: all 0.2s;
-    }
-    .fav-btn.active {
-      background: rgba(255, 0, 85, 0.85);
-      border-color: #ff0055;
-    }
-
-    .meta-box-bottom {
-      position: absolute;
-      bottom: 8px;
-      left: 8px;
-      right: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .views-tag {
-      background: rgba(9, 12, 20, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      padding: 2px 6px;
-      border-radius: 6px;
-      font-size: 10px;
-      font-weight: 700;
-      color: #cbd5e1;
-      display: flex;
-      align-items: center;
-      gap: 3px;
-    }
-    .rating-badge {
-      background: rgba(9, 12, 20, 0.85);
-      border: 1px solid rgba(245, 158, 11, 0.4);
-      padding: 2px 6px;
-      border-radius: 6px;
-      font-size: 10px;
-      font-weight: 800;
-      color: #fbbf24;
-    }
-
-    .card-details {
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      flex-grow: 1;
-      justify-content: space-between;
-      gap: 10px;
-    }
-    .movie-name {
-      font-size: 14px;
-      font-weight: 700;
-      line-height: 1.35;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      color: #ffffff;
-    }
-
-    .btn-action {
-      background: var(--btn-cinema);
-      color: #ffffff;
-      border: none;
-      padding: 9px 0;
-      border-radius: 10px;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      width: 100%;
-      text-align: center;
-      box-shadow: 0 4px 14px var(--btn-glow);
-      transition: all 0.2s ease;
-    }
-    .btn-action:active {
-      opacity: 0.9;
-      transform: scale(0.98);
-    }
-
-    /* KINO TAFSILOTLARI MODALI */
-    .sheet-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(8px);
-      z-index: 110;
-    }
-    .bottom-sheet {
-      display: none;
-      position: fixed;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 100%;
-      max-width: 420px;
-      background: rgba(16, 20, 30, 0.96);
-      backdrop-filter: blur(25px);
-      border-top: 1px solid var(--surface-border);
-      border-radius: 26px 26px 0 0;
-      padding: 18px 18px 30px 18px;
-      z-index: 111;
-      animation: sheetUp 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
-    }
-    @keyframes sheetUp {
-      from { bottom: -100%; }
-      to { bottom: 0; }
-    }
-    .sheet-handle {
-      width: 36px;
-      height: 4px;
-      background: rgba(255,255,255,0.25);
-      border-radius: 10px;
-      margin: 0 auto 16px auto;
-    }
-    .sheet-main {
-      display: flex;
-      gap: 14px;
-      margin-bottom: 14px;
-    }
-    .sheet-poster {
-      width: 100px;
-      height: 145px;
-      object-fit: cover;
-      border-radius: 12px;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.5);
-    }
-    .sheet-info h3 {
-      font-size: 17px;
-      font-weight: 900;
-      margin-bottom: 6px;
-    }
-    .sheet-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-      margin-bottom: 8px;
-    }
-    .sheet-pill {
-      background: rgba(255,255,255,0.08);
-      padding: 3px 8px;
-      border-radius: 6px;
-      font-size: 11px;
-      color: #cbd5e1;
-      font-weight: 600;
-    }
-    .sheet-desc {
-      font-size: 12.5px;
-      color: var(--text-muted);
-      line-height: 1.5;
-      margin-bottom: 20px;
-    }
-
-    /* BARCHA JANRLAR RO'YXATI MODALI */
-    .genres-modal {
-      display: none;
-      position: fixed;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 100%;
-      max-width: 420px;
-      background: rgba(16, 20, 30, 0.98);
-      backdrop-filter: blur(25px);
-      border-top: 1px solid var(--surface-border);
-      border-radius: 26px 26px 0 0;
-      padding: 18px 18px 30px 18px;
-      z-index: 112;
-      animation: sheetUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-    }
-    .genres-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-    .genres-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-    }
-    .genre-card-btn {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--surface-border);
-      color: #ffffff;
-      padding: 12px 10px;
-      border-radius: 12px;
-      font-size: 13px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .genre-card-btn:active, .genre-card-btn.selected {
-      background: var(--brand-gradient);
-      border-color: transparent;
-      box-shadow: 0 4px 14px var(--brand-glow);
-    }
-
-    /* SERIAL ICHKI SAHIFASI */
-    #seriesView {
-      display: none;
-      max-width: 420px;
-      margin: 0 auto;
-    }
-    .back-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(18, 24, 38, 0.7);
-      backdrop-filter: blur(12px);
-      border: 1px solid var(--surface-border);
-      color: #ffffff;
-      padding: 8px 14px;
-      border-radius: 10px;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      margin-bottom: 14px;
-    }
-    .series-header-card {
-      display: flex;
-      gap: 14px;
-      background: var(--surface-card);
-      backdrop-filter: blur(16px);
-      border: 1px solid var(--surface-border);
-      padding: 12px;
-      border-radius: 16px;
-      margin-bottom: 20px;
-    }
-    .series-header-card img {
-      width: 85px;
-      height: 120px;
-      object-fit: cover;
-      border-radius: 10px;
-    }
-    .series-meta {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-    .series-meta h2 {
-      font-size: 16px;
-      font-weight: 800;
-      margin-bottom: 6px;
-    }
-    .series-meta p {
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-    .episodes-title {
-      font-size: 15px;
-      font-weight: 800;
-      margin-bottom: 12px;
-      color: #ff0055;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .episodes-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .episode-card {
-      background: var(--surface-card);
-      backdrop-filter: blur(14px);
-      border: 1px solid var(--surface-border);
-      padding: 12px 14px;
-      border-radius: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: pointer;
-    }
-    .episode-card:active {
-      border-color: #ff0055;
-    }
-    .ep-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .ep-num {
-      width: 28px;
-      height: 28px;
-      background: rgba(255, 0, 85, 0.15);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: bold;
-      color: #ff0055;
-    }
-    .ep-title {
-      font-size: 13px;
-      font-weight: 700;
-    }
-    .ep-btn-play {
-      background: var(--btn-cinema);
-      color: #ffffff;
-      border: none;
-      padding: 6px 14px;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 800;
-      box-shadow: 0 2px 10px var(--btn-glow);
-    }
-
-    /* DONAT MODAL */
-    .donate-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(12px);
-      z-index: 100;
-    }
-    .donate-modal {
-      display: none;
-      position: fixed;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 100%;
-      max-width: 420px;
-      background: rgba(16, 20, 30, 0.95);
-      backdrop-filter: blur(20px);
-      border-top: 1px solid var(--surface-border);
-      border-radius: 26px 26px 0 0;
-      padding: 18px 16px 30px 16px;
-      z-index: 101;
-      max-height: 90vh;
-      overflow-y: auto;
-      animation: sheetUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-    }
-    .donate-handle {
-      width: 38px;
-      height: 4px;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 10px;
-      margin: 0 auto 14px auto;
-    }
-    .donate-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 6px;
-    }
-    .donate-header h3 {
-      font-size: 17px;
-      font-weight: 800;
-    }
-    .donate-close {
-      font-size: 20px;
-      color: var(--text-muted);
-      cursor: pointer;
-    }
-    .donate-desc {
-      font-size: 12px;
-      color: var(--text-muted);
-      line-height: 1.4;
-      margin-bottom: 16px;
-    }
-    .card-perspective-container {
-      margin-bottom: 16px;
-    }
-    .credit-card {
-      border-radius: 20px;
-      padding: 18px 16px;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.55);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      cursor: pointer;
-    }
-    .card-uzcard {
-      background: linear-gradient(135deg, #0f4c5c 0%, #0a2533 100%);
-    }
-    .card-visa {
-      background: linear-gradient(135deg, #1a2a6c 0%, #101736 100%);
-    }
-    .card-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-    .card-chip {
-      width: 34px;
-      height: 24px;
-      background: linear-gradient(135deg, #e0aa3e 0%, #b8860b 100%);
-      border-radius: 5px;
-    }
-    .card-logo-text {
-      font-size: 13px;
-      font-weight: 900;
-      letter-spacing: 1px;
-    }
-    .logo-uzcard { color: #00e5ff; }
-    .logo-visa { color: #ffffff; font-style: italic; font-size: 16px; }
-    .card-num-label {
-      font-size: 9px;
-      font-weight: 700;
-      color: #94a3b8;
-      text-transform: uppercase;
-      margin-bottom: 4px;
-    }
-    .card-middle-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 14px;
-    }
-    .card-num-digits {
-      font-family: "Courier New", Courier, monospace, sans-serif;
-      font-size: 17px;
-      font-weight: 900;
-      letter-spacing: 1.5px;
-    }
-    .btn-inner-copy {
-      background: rgba(255, 255, 255, 0.12);
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      color: #ffffff;
-      padding: 6px 12px;
-      border-radius: 10px;
-      font-size: 11px;
-      font-weight: 800;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      cursor: pointer;
-    }
-    @keyframes button360Spin {
-      0% { transform: rotate(0deg) scale(0.9); }
-      50% { transform: rotate(180deg) scale(1.15); }
-      100% { transform: rotate(360deg) scale(1); }
-    }
-    .spin-btn-anim {
-      animation: button360Spin 0.55s cubic-bezier(0.34, 1.3, 0.64, 1) !important;
-    }
-    .card-bottom {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .card-holder-name {
-      font-size: 11px;
-      font-weight: 800;
-      color: #cbd5e1;
-    }
-    .card-tag {
-      font-size: 10px;
-      font-weight: 800;
-      padding: 2px 7px;
-      border-radius: 5px;
-    }
-    .tag-uzcard { color: #00e5ff; background: rgba(0, 229, 255, 0.15); }
-    .tag-visa { color: #f39c12; background: rgba(243, 156, 18, 0.15); }
-
-    .empty-state {
-      grid-column: span 2;
-      text-align: center;
-      padding: 40px 10px;
-      color: var(--text-muted);
-      font-size: 14px;
-    }
-  </style>
-</head>
-<body>
-
-  <div class="ambient-canvas">
-    <div class="orb-top"></div>
-    <div class="orb-red"></div>
-  </div>
-
-  <div class="app-wrapper">
-    <header class="top-bar">
-      <div class="brand" onclick="goToHomeMenu()">
-        <div class="brand-icon-wrap">
-          <div class="brand-icon">▶</div>
-        </div>
-        <div class="brand-title">LOST<span>FILM</span></div>
-      </div>
-      
-      <div class="lang-switcher">
-        <button class="lang-btn active" id="btn-uz" onclick="changeLang('uz')">UZ</button>
-        <button class="lang-btn" id="btn-ru" onclick="changeLang('ru')">RU</button>
-      </div>
-    </header>
-
-    <div id="mainView">
-      <div class="hero-container" id="heroBanner">
-        <div class="hero-dots" id="heroDots"></div>
-      </div>
-
-      <div class="donate-sub-banner" onclick="openDonateModal()">
-        <div class="donate-sub-left">
-          <span>❤️</span>
-          <span id="bannerDonateText">Loyihani qo'llab-quvvatlash</span>
-        </div>
-        <div class="donate-sub-btn" id="bannerDonateBtn">Donat qilish ➔</div>
-      </div>
-
-      <div class="search-box">
-        <input type="text" id="searchInput" class="search-input" placeholder="Kino yoki serial qidirish..." oninput="handleSearch()">
-      </div>
-
-      <div class="tabs-wrapper">
-        <div class="tabs-row">
-          <button class="tab-item active" id="tab-all" onclick="setTab('all')">Barchasi</button>
-          <button class="tab-item" id="tab-kino" onclick="setTab('kino')">Kinolar</button>
-          <button class="tab-item" id="tab-serial" onclick="setTab('serial')">Seriallar</button>
-        </div>
-        <div class="tabs-row">
-          <button class="tab-item" id="tab-genres" onclick="openGenresModal()">🎭 Janrlar ▾</button>
-          <button class="tab-item" id="tab-fav" onclick="setTab('fav')">⭐ Saqlangan</button>
-        </div>
-      </div>
-
-      <main class="catalog-grid" id="moviesGrid"></main>
-    </div>
-
-    <div id="seriesView">
-      <button class="back-btn" onclick="backToCatalog()">
-        ⬅ <span id="backText">Orqaga qaytish</span>
-      </button>
-      
-      <div class="series-header-card">
-        <img id="curSeriesPoster" src="" alt="Poster">
-        <div class="series-meta">
-          <h2 id="curSeriesTitle"></h2>
-          <p id="curSeriesCode"></p>
-        </div>
-      </div>
-
-      <div class="episodes-title">
-        🎬 <span id="episodesHeading">Mavjud qismlar:</span>
-      </div>
-
-      <div class="episodes-list" id="episodesList"></div>
-    </div>
-  </div>
-
-  <!-- KINO TAFSILOTLARI MODALI -->
-  <div class="sheet-overlay" id="sheetOverlay" onclick="closeSheet()"></div>
-  <div class="bottom-sheet" id="bottomSheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-main">
-      <img id="sheetPoster" class="sheet-poster" src="" alt="Poster">
-      <div class="sheet-info">
-        <h3 id="sheetTitle"></h3>
-        <div class="sheet-tags">
-          <span class="sheet-pill" id="sheetRating" style="color: #fbbf24;">★ 8.5</span>
-          <span class="sheet-pill" id="sheetYear">2024</span>
-          <span class="sheet-pill" id="sheetType">KINO</span>
-        </div>
-        <p style="font-size: 11px; color: var(--text-muted);" id="sheetCode"></p>
-      </div>
-    </div>
-    <p class="sheet-desc" id="sheetDesc"></p>
-    <button class="btn-action" id="sheetBtnAction" style="padding: 12px 0; font-size: 14px;">
-      ▶ Ko'rishni boshlash
-    </button>
-  </div>
-
-  <!-- BARCHA JANRLAR RO'YXATI MODALI -->
-  <div class="sheet-overlay" id="genresOverlay" onclick="closeGenresModal()"></div>
-  <div class="genres-modal" id="genresModal">
-    <div class="sheet-handle"></div>
-    <div class="genres-header">
-      <h3 style="font-size: 17px; font-weight: 900;" id="genresModalHead">🎭 Barcha Janrlar</h3>
-      <span style="font-size: 20px; color: var(--text-muted); cursor: pointer;" onclick="closeGenresModal()">✕</span>
-    </div>
-    <div class="genres-grid" id="genresGridContainer"></div>
-  </div>
-
-  <!-- DONAT MODAL OYNASI -->
-  <div class="donate-overlay" id="donateOverlay" onclick="closeDonateModal()"></div>
-  <div class="donate-modal" id="donateModal">
-    <div class="donate-handle"></div>
-    <div class="donate-header">
-      <h3 id="donHead">❤️ Loyihani qo'llab-quvvatlash</h3>
-      <div class="donate-close" onclick="closeDonateModal()">✕</div>
-    </div>
-    <p class="donate-desc" id="donDesc">
-      Kino va seriallarni muntazam va sifatli yuklab borishimiz uchun o'z hissangizni qo'shishingiz mumkin:
-    </p>
-
-    <div class="card-perspective-container">
-      <div class="credit-card card-uzcard" id="cardUzcardWrap" onclick="copyCard('uzcard')">
-        <div class="card-top">
-          <div class="card-chip"></div>
-          <div class="card-logo-text logo-uzcard">UZCARD / HUMO</div>
-        </div>
-        <div class="card-num-label" id="lblUzcard">Uzcard / Humo</div>
-        
-        <div class="card-middle-row">
-          <div class="card-num-digits" id="dispUzcard">9860 1701 1714 5087</div>
-          <button class="btn-inner-copy" id="btnCopyUzcard" onclick="event.stopPropagation(); copyCard('uzcard')">
-            <span id="icnUzcard">📋</span>
-            <span id="txtCopyUzcard">Nusxa</span>
-          </button>
-        </div>
-
-        <div class="card-bottom">
-          <div class="card-holder-name">LOSTFILM DONATE</div>
-          <div class="card-tag tag-uzcard">HUMO & UZCARD</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card-perspective-container">
-      <div class="credit-card card-visa" id="cardVisaWrap" onclick="copyCard('visa')">
-        <div class="card-top">
-          <div class="card-chip"></div>
-          <div class="card-logo-text logo-visa">VISA</div>
-        </div>
-        <div class="card-num-label" id="lblVisa">Visa xalqaro kartasi</div>
-        
-        <div class="card-middle-row">
-          <div class="card-num-digits" id="dispVisa">4278 3100 2985 5707</div>
-          <button class="btn-inner-copy" id="btnCopyVisa" onclick="event.stopPropagation(); copyCard('visa')">
-            <span id="icnVisa">📋</span>
-            <span id="txtCopyVisa">Nusxa</span>
-          </button>
-        </div>
-
-        <div class="card-bottom">
-          <div class="card-holder-name">LOSTFILM DONATE</div>
-          <div class="card-tag tag-visa">INTERNATIONAL</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    const tg = window.Telegram?.WebApp;
-    if (tg) {
-      try { tg.ready(); tg.expand(); } catch (e) {}
-    }
-
-    const UZCARD_HUMO = "9860170117145087"; 
-    const VISA_CARD   = "4278310029855707"; 
+class AdminStates(StatesGroup):
+    add_movie_code = State()
+    add_movie_file = State()
+    add_movie_caption = State()
+    add_movie_genre = State() # JANR UCHUN YANGI HOLAT
     
-    const RAW_SERVER_IP = "72.56.74.54"; 
-    const API_URL = `https://milwaukee-behavioral-architects-tired.trycloudflare.com/api/movies`;
-
-    let currentLang = localStorage.getItem('selected_lang') || 'uz';
-    let currentTab = 'all'; 
-    let selectedGenreKey = 'all';
-    let searchQuery = '';
-    let heroIndex = 0;
-    let heroTimer = null;
-
-    let favorites = JSON.parse(localStorage.getItem('lostfilm_favs') || "[]");
-
-    let moviesData = [ ];
-
-    const genresList = [
-      { key: 'all', icon: '✨', uz: 'Barchasi', ru: 'Все' },
-      { key: 'action', icon: '🔥', uz: 'Jangari', ru: 'Боевик' },
-      { key: 'scifi', icon: '🚀', uz: 'Fantastika', ru: 'Фантастика' },
-      { key: 'comedy', icon: '🎭', uz: 'Komediya', ru: 'Комедия' },
-      { key: 'horror', icon: '👻', uz: 'Dahshatli', ru: 'Ужасы' },
-      { key: 'crime', icon: '🕶', uz: 'Kriminal', ru: 'Криминал' },
-      { key: 'drama', icon: '💔', uz: 'Drama', ru: 'Драма' },
-      { key: 'adventure', icon: '🗺', uz: 'Sarguzasht', ru: 'Приключения' }
-    ];
-
-    const dict = {
-      uz: {
-        all: "Barchasi",
-        kino: "Kinolar",
-        serial: "Seriallar",
-        genres: "🎭 Janrlar ▾",
-        genresHead: "🎭 Barcha Janrlar",
-        fav: "⭐ Saqlangan",
-        watchKino: "Ko'rish",
-        openSerial: "Qismlar ➔",
-        kinoBadge: "Film",
-        serialBadge: "Serial",
-        searchPlaceholder: "Kino yoki serial qidirish...",
-        empty: "Hali kinolar mavjud emas.",
-        emptyFav: "Siz hali hech qanday kinoni saqlamadingiz.",
-        back: "Orqaga qaytish",
-        episodesHead: "Barcha qismlar ro'yxati:",
-        partWord: "-qism",
-        playWord: "Ochish",
-        bannerDonateText: "Loyihani qo'llab-quvvatlash",
-        bannerDonateBtn: "Donat qilish ➔",
-        donHead: "❤️ Loyihani qo'llab-quvvatlash",
-        donDesc: "Kino va seriallarni muntazam va sifatli yuklab borishimiz uchun o'z hissangizni qo'shishingiz mumkin:",
-        lblUzcard: "Uzcard / Humo",
-        lblVisa: "Visa xalqaro kartasi",
-        txtCopy: "Nusxa",
-        copiedBtn: "Nusxalandi! ✓",
-        sheetWatch: "▶ Tomosha qilish",
-        sheetOpen: "📺 Qismlarni ko'rish",
-        topHitTag: "🔥 ENG KO'P KO'RILGAN"
-      },
-      ru: {
-        all: "Все",
-        kino: "Фильмы",
-        serial: "Сериалы",
-        genres: "🎭 Жанры ▾",
-        genresHead: "🎭 Все Жанры",
-        fav: "⭐ Избранное",
-        watchKino: "Смотреть",
-        openSerial: "Серии ➔",
-        kinoBadge: "Фильм",
-        serialBadge: "Сериал",
-        searchPlaceholder: "Поиск фильмов или сериалов...",
-        empty: "Фильмы еще не добавлены.",
-        emptyFav: "Вы еще не добавили фильмы в избранное.",
-        back: "Назад в каталог",
-        episodesHead: "Список всех серий:",
-        partWord: "-серия",
-        playWord: "Открыть",
-        bannerDonateText: "Поддержать проект",
-        bannerDonateBtn: "Донат ➔",
-        donHead: "❤️ Поддержка проекта",
-        donDesc: "Вы можете внести свой вклад в регулярное и качественное добавление новых фильмов и сериалов:",
-        lblUzcard: "Карта Uzcard / Humo",
-        lblVisa: "Международная карта Visa",
-        txtCopy: "Скопировать",
-        copiedBtn: "Скопировано! ✓",
-        sheetWatch: "▶ Смотреть сейчас",
-        sheetOpen: "📺 Список серий",
-        topHitTag: "🔥 САМЫЙ ПОПУЛЯРНЫЙ"
-      }
-    };
-
-    function haptic() {
-      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-    }
-
-    function goToHomeMenu() {
-      haptic();
-      closeSheet();
-      closeDonateModal();
-      closeGenresModal();
-
-      document.getElementById('seriesView').style.display = 'none';
-      document.getElementById('mainView').style.display = 'block';
-
-      document.getElementById("searchInput").value = "";
-      searchQuery = "";
-
-      setTab('all');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function renderHeroSlider() {
-      const hero = document.getElementById("heroBanner");
-      const dots = document.getElementById("heroDots");
-      hero.querySelectorAll(".hero-slide").forEach(s => s.remove());
-      dots.innerHTML = "";
-
-      const sortedByViews = [...moviesData].sort((a, b) => (b.views || 0) - (a.views || 0));
-      const topItems = sortedByViews.slice(0, 3);
-
-      if (topItems.length === 0) {
-        hero.style.display = "none";
-        return;
-      }
-      hero.style.display = "block";
-
-      topItems.forEach((item, idx) => {
-        const slide = document.createElement("div");
-        slide.className = `hero-slide ${idx === 0 ? 'active' : ''}`;
-        slide.onclick = () => openSheet(item.code);
-
-        slide.innerHTML = `
-          <img src="${item.poster}" class="hero-bg-img" alt="${item.title}">
-          <div class="hero-overlay"></div>
-          <div class="hero-content">
-            <span class="hero-tag">${dict[currentLang].topHitTag}</span>
-            <div class="hero-title">${item.title}</div>
-            <div class="hero-meta">👁 ${formatViews(item.views)} ko'rildi • ⭐ ${item.rating || '8.0'} • ${item.year || '2024'}</div>
-            <button class="btn-action" style="width: 140px; padding: 7px 0; font-size: 12px;" onclick="event.stopPropagation(); heroBtnClick(${item.code})">
-              ▶ ${dict[currentLang].watchKino}
-            </button>
-          </div>
-        `;
-        hero.appendChild(slide);
-
-        dots.innerHTML += `<div class="hero-dot ${idx === 0 ? 'active' : ''}"></div>`;
-      });
-
-      if (heroTimer) clearInterval(heroTimer);
-      heroTimer = setInterval(() => {
-        heroIndex = (heroIndex + 1) % topItems.length;
-        document.querySelectorAll(".hero-slide").forEach((s, i) => s.classList.toggle("active", i === heroIndex));
-        document.querySelectorAll(".hero-dot").forEach((d, i) => d.classList.toggle("active", i === heroIndex));
-      }, 4000);
-    }
-
-    function heroBtnClick(code) {
-      const item = moviesData.find(m => m.code === code);
-      if (item && item.type === 'serial') openSeriesDetails(code);
-      else sendToBot(code);
-    }
-
-    function openSheet(code) {
-      haptic();
-      const item = moviesData.find(m => m.code === code);
-      if (!item) return;
-
-      document.getElementById("sheetPoster").src = item.poster;
-      document.getElementById("sheetTitle").innerText = item.title;
-      document.getElementById("sheetRating").innerText = `★ ${item.rating || '7.5'}`;
-      document.getElementById("sheetYear").innerText = item.year || '2024';
-      document.getElementById("sheetType").innerText = item.type === 'serial' ? 'SERIAL' : 'KINO';
-      document.getElementById("sheetCode").innerText = "Kod: #" + item.code;
-      document.getElementById("sheetDesc").innerText = item.desc || "Ushbu premyera eng sara ovoz va yuqori sifatda taqdim etiladi.";
-
-      const btn = document.getElementById("sheetBtnAction");
-      btn.innerText = item.type === 'serial' ? dict[currentLang].sheetOpen : dict[currentLang].sheetWatch;
-      btn.onclick = () => {
-        closeSheet();
-        if (item.type === 'serial') openSeriesDetails(item.code);
-        else sendToBot(item.code);
-      };
-
-      document.getElementById("sheetOverlay").style.display = "block";
-      document.getElementById("bottomSheet").style.display = "block";
-    }
-
-    function closeSheet() {
-      haptic();
-      document.getElementById("sheetOverlay").style.display = "none";
-      document.getElementById("bottomSheet").style.display = "none";
-    }
-
-    function renderGenresModalGrid() {
-      const container = document.getElementById("genresGridContainer");
-      container.innerHTML = "";
-
-      genresList.forEach(g => {
-        const title = (currentLang === 'ru') ? g.ru : g.uz;
-        const isSelected = (selectedGenreKey === g.key);
-        container.innerHTML += `
-          <button class="genre-card-btn ${isSelected ? 'selected' : ''}" onclick="selectGenre('${g.key}', '${g.icon} ${title}')">
-            ${g.icon} ${title}
-          </button>
-        `;
-      });
-    }
-
-    function openGenresModal() {
-      haptic();
-      renderGenresModalGrid();
-      document.getElementById("genresOverlay").style.display = "block";
-      document.getElementById("genresModal").style.display = "block";
-    }
-
-    function closeGenresModal() {
-      haptic();
-      document.getElementById("genresOverlay").style.display = "none";
-      document.getElementById("genresModal").style.display = "none";
-    }
-
-    function selectGenre(genreKey, genreLabel) {
-      haptic();
-      selectedGenreKey = genreKey;
-      closeGenresModal();
-
-      const btnGenres = document.getElementById("tab-genres");
-      document.querySelectorAll(".tab-item").forEach(el => el.classList.remove("active", "genre-active"));
-
-      if (genreKey === 'all') {
-        currentTab = 'all';
-        document.getElementById("tab-all").classList.add("active");
-        btnGenres.innerText = dict[currentLang].genres;
-      } else {
-        currentTab = 'genre';
-        btnGenres.classList.add("genre-active");
-        btnGenres.innerText = genreLabel + " ✕";
-      }
-
-      renderCatalog();
-    }
-
-    function setTab(tab) {
-      haptic();
-      currentTab = tab;
-      selectedGenreKey = 'all';
-
-      const btnGenres = document.getElementById("tab-genres");
-      btnGenres.innerText = dict[currentLang].genres;
-
-      document.querySelectorAll(".tab-item").forEach(el => el.classList.remove("active", "genre-active"));
-      const activeEl = document.getElementById("tab-" + tab);
-      if (activeEl) activeEl.classList.add("active");
-
-      renderCatalog();
-    }
-
-    function handleSearch() {
-      searchQuery = document.getElementById("searchInput").value.toLowerCase();
-      renderCatalog();
-    }
-
-    function toggleFavorite(code, event) {
-      event.stopPropagation();
-      haptic();
-      if (favorites.includes(code)) {
-        favorites = favorites.filter(id => id !== code);
-      } else {
-        favorites.push(code);
-      }
-      localStorage.setItem('lostfilm_favs', JSON.stringify(favorites));
-      renderCatalog();
-    }
-
-    function formatViews(n) {
-      if (!n) return "0";
-      if (n >= 1000) return (n / 1000).toFixed(1) + "k";
-      return n.toString();
-    }
-
-    function changeLang(lang) {
-      haptic();
-      currentLang = lang;
-      document.getElementById('btn-uz').classList.toggle('active', lang === 'uz');
-      document.getElementById('btn-ru').classList.toggle('active', lang === 'ru');
-
-      document.getElementById('tab-all').innerText = dict[lang].all;
-      document.getElementById('tab-kino').innerText = dict[lang].kino;
-      document.getElementById('tab-serial').innerText = dict[lang].serial;
-      
-      if (currentTab !== 'genre') {
-        document.getElementById('tab-genres').innerText = dict[lang].genres;
-      } else {
-        const found = genresList.find(g => g.key === selectedGenreKey);
-        if (found) {
-          const title = (lang === 'ru') ? found.ru : found.uz;
-          document.getElementById('tab-genres').innerText = `${found.icon} ${title} ✕`;
-        }
-      }
-
-      document.getElementById('genresModalHead').innerText = dict[lang].genresHead;
-      document.getElementById('tab-fav').innerText = dict[lang].fav;
-      document.getElementById('searchInput').placeholder = dict[lang].searchPlaceholder;
-      document.getElementById('backText').innerText = dict[lang].back;
-      document.getElementById('episodesHeading').innerText = dict[lang].episodesHead;
-      
-      document.getElementById('bannerDonateText').innerText = dict[lang].bannerDonateText;
-      document.getElementById('bannerDonateBtn').innerText = dict[lang].bannerDonateBtn;
-      document.getElementById('donHead').innerText = dict[lang].donHead;
-      document.getElementById('donDesc').innerText = dict[lang].donDesc;
-      document.getElementById('lblUzcard').innerText = dict[lang].lblUzcard;
-      document.getElementById('lblVisa').innerText = dict[lang].lblVisa;
-      document.getElementById('txtCopyUzcard').innerText = dict[lang].txtCopy;
-      document.getElementById('txtCopyVisa').innerText = dict[lang].txtCopy;
-
-      localStorage.setItem('selected_lang', lang);
-      renderCatalog();
-      renderHeroSlider();
-    }
-
-    function renderCatalog() {
-      const container = document.getElementById('moviesGrid');
-      container.innerHTML = "";
-
-      const filtered = moviesData.filter(item => {
-        let matchesTab = true;
-        if (currentTab === 'kino') matchesTab = (item.type === 'kino');
-        else if (currentTab === 'serial') matchesTab = (item.type === 'serial');
-        else if (currentTab === 'genre') matchesTab = (item.genre === selectedGenreKey);
-        else if (currentTab === 'fav') matchesTab = favorites.includes(item.code);
-
-        const matchesSearch = item.title.toLowerCase().includes(searchQuery);
-        return matchesTab && matchesSearch;
-      });
-
-      if (filtered.length === 0) {
-        const msg = (currentTab === 'fav') ? dict[currentLang].emptyFav : dict[currentLang].empty;
-        container.innerHTML = `<div class="empty-state">${msg}</div>`;
-        return;
-      }
-
-      filtered.forEach(item => {
-        const isSerial = item.type === 'serial';
-        const typeClass = isSerial ? 'type-serial' : 'type-kino';
-        const typeText = isSerial ? dict[currentLang].serialBadge : dict[currentLang].kinoBadge;
-        const btnText = isSerial ? dict[currentLang].openSerial : dict[currentLang].watchKino;
-        const isFav = favorites.includes(item.code);
-
-        container.innerHTML += `
-          <div class="movie-card" onclick="openSheet(${item.code})">
-            <div class="poster-box">
-              <span class="type-tag ${typeClass}">${typeText}</span>
-              
-              <div class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(${item.code}, event)">
-                ${isFav ? '❤️' : '🤍'}
-              </div>
-
-              <div class="meta-box-bottom">
-                <div class="views-tag">👁 ${formatViews(item.views)}</div>
-                <div class="rating-badge">★ ${item.rating || '8.0'}</div>
-              </div>
-
-              <img src="${item.poster}" alt="${item.title}">
-            </div>
-            <div class="card-details">
-              <div class="movie-name">${item.title}</div>
-              <button class="btn-action" onclick="event.stopPropagation(); heroBtnClick(${item.code})">
-                ${btnText}
-              </button>
-            </div>
-          </div>
-        `;
-      });
-    }
-
-    function openSeriesDetails(seriesCode) {
-      haptic();
-      const series = moviesData.find(s => s.code === seriesCode);
-      if (!series) return;
-
-      document.getElementById('curSeriesPoster').src = series.poster;
-      document.getElementById('curSeriesTitle').innerText = series.title;
-      document.getElementById('curSeriesCode').innerText = "Kod: " + series.code;
-
-      const listContainer = document.getElementById('episodesList');
-      listContainer.innerHTML = "";
-
-      const episodes = series.episodes || [
-        { ep_num: 1, title: "1-qism" }
-      ];
-
-      episodes.forEach(ep => {
-        listContainer.innerHTML += `
-          <div class="episode-card" onclick="sendEpisodeToBot(${series.code}, ${ep.ep_num})">
-            <div class="ep-left">
-              <div class="ep-num">${ep.ep_num}</div>
-              <div class="ep-title">${ep.title || (ep.ep_num + dict[currentLang].partWord)}</div>
-            </div>
-            <button class="ep-btn-play">▶ ${dict[currentLang].playWord}</button>
-          </div>
-        `;
-      });
-
-      document.getElementById('mainView').style.display = 'none';
-      document.getElementById('seriesView').style.display = 'block';
-      window.scrollTo(0, 0);
-    }
-
-    function backToCatalog() {
-      haptic();
-      document.getElementById('seriesView').style.display = 'none';
-      document.getElementById('mainView').style.display = 'block';
-    }
-
-    function sendToBot(code) {
-      haptic();
-      if (tg && tg.sendData) {
-        tg.sendData(code.toString());
-      } else {
-        alert("Kino kodi botga yuborildi: " + code);
-      }
-    }
-
-    function sendEpisodeToBot(seriesCode, epNum) {
-      haptic();
-      const sendValue = `ep_${seriesCode}_${epNum}`;
-      if (tg && tg.sendData) {
-        tg.sendData(sendValue);
-      } else {
-        alert("Serial qismi botga yuborildi: " + sendValue);
-      }
-    }
-
-    function openDonateModal() {
-      haptic();
-      document.getElementById('dispUzcard').innerText = UZCARD_HUMO.replace(/(\d{4})(?=\d)/g, '$1 ');
-      document.getElementById('dispVisa').innerText   = VISA_CARD.replace(/(\d{4})(?=\d)/g, '$1 ');
-
-      document.getElementById('donateOverlay').style.display = 'block';
-      document.getElementById('donateModal').style.display = 'block';
-    }
-
-    function closeDonateModal() {
-      haptic();
-      document.getElementById('donateOverlay').style.display = 'none';
-      document.getElementById('donateModal').style.display = 'none';
-    }
-
-    function copyCard(type) {
-      haptic();
-      const numToCopy = (type === 'uzcard') ? UZCARD_HUMO : VISA_CARD;
-      const btnEl      = document.getElementById(type === 'uzcard' ? 'btnCopyUzcard' : 'btnCopyVisa');
-      const txtEl      = document.getElementById(type === 'uzcard' ? 'txtCopyUzcard' : 'txtCopyVisa');
-      const icnEl      = document.getElementById(type === 'uzcard' ? 'icnUzcard' : 'icnVisa');
-
-      btnEl.classList.remove('spin-btn-anim');
-      void btnEl.offsetWidth;
-      btnEl.classList.add('spin-btn-anim');
-
-      navigator.clipboard.writeText(numToCopy).then(() => {
-        txtEl.innerText = dict[currentLang].copiedBtn;
-        icnEl.innerText = "✓";
-        btnEl.style.background = "#22c55e";
-        btnEl.style.color = "#ffffff";
-        btnEl.style.borderColor = "rgba(255, 255, 255, 0.4)";
-
-        setTimeout(() => {
-          txtEl.innerText = dict[currentLang].txtCopy;
-          icnEl.innerText = "📋";
-          btnEl.style.background = "rgba(255, 255, 255, 0.12)";
-          btnEl.style.color = "#ffffff";
-          btnEl.style.borderColor = "rgba(255, 255, 255, 0.25)";
-        }, 2200);
-      });
-    }
-
-    // CORSProxy.io yordamida ishonchli ulanish
-  
-async function fetchMovies() {
-  try {
-    // Hech qanday proksisiz, to'g'ridan-to'g'ri Cloudflare havolasiga so'rov yuboramiz
-    const response = await fetch(API_URL, { cache: "no-store" });
+    add_series_code = State()
+    add_series_ep_num = State()
+    add_series_file = State()
+    add_series_caption = State()
     
-    if (response.ok) {
-      const data = await response.json();
-      if (Array.isArray(data) && data.length > 0) {
-        moviesData = data;
-        renderCatalog();
-        renderHeroSlider();
-        console.log("Serverdan kinolar muvaffaqiyatli yuklandi:", data.length);
-      }
+    give_vip_user_id = State()
+    broadcast_message = State()
+    delete_content_code = State()
+
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('''CREATE TABLE IF NOT EXISTS users (user_id INTEGER PRIMARY KEY, language TEXT, is_vip INTEGER DEFAULT 0)''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS content (code TEXT PRIMARY KEY, file_id TEXT, caption TEXT, series_code TEXT, episode_num INTEGER)''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS user_watched (user_id INTEGER, series_code TEXT, episode_num INTEGER, PRIMARY KEY(user_id, series_code, episode_num))''')
+    
+    # Baza yangilanishi: Eski bazaga "genre" ustunini qo'shishga harakat qilamiz
+    try:
+        cursor.execute("ALTER TABLE content ADD COLUMN genre TEXT")
+    except sqlite3.OperationalError:
+        pass # Agar ustun allaqachon mavjud bo'lsa, xatolikni o'tkazib yuboradi
+        
+    conn.commit()
+    conn.close()
+
+def get_user_language(user_id: int) -> str:
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('SELECT language FROM users WHERE user_id = ?', (user_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return row[0] if row else "uz"
+
+def is_user_vip(user_id: int) -> bool:
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('SELECT is_vip FROM users WHERE user_id = ?', (user_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return bool(row and row[0] == 1)
+
+def set_user_language(user_id: int, lang: str):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('INSERT OR IGNORE INTO users (user_id, language) VALUES (?, ?)', (user_id, lang))
+    cursor.execute('UPDATE users SET language = ? WHERE user_id = ?', (lang, user_id))
+    conn.commit()
+    conn.close()
+
+TEXTS = {
+    "uz": {
+        "welcome": "Siz O'zbek tilini tanladingiz! 🇺🇿\n\n🎬 Kino kodini yuboring yoki barcha kinolarni ko'rish uchun quyidagi tugmani bosing:",
+        "catalog_btn": "📋 Kinolar ro'yxati",
+        "mini_app_btn": "📱 Mini App orqali qidirish",
+        "not_found": "Kechirasiz, bunday kodli kino yoki qism topilmadi. 😕",
+        "choose_episode": "📺 **Serial qismlari:** O'zingizga kerakli qismni tanlang👇",
+        "vip_required": "⭐ **Diqqat! Bu qismni ko'rish uchun VIP obuna bo'lishingiz kerak!**\n\nObuna sotib olish uchun adminga murojaat qiling:",
+        "contact_admin": "💬 Adminga murojaat qilish"
+    },
+    "ru": {
+        "welcome": "Вы выбрали русский язык! 🇷🇺\n\n🎬 Отправьте код фильма или нажмите кнопку ниже для просмотра всех фильмов:",
+        "catalog_btn": "📋 Список фильмов",
+        "mini_app_btn": "📱 Поиск через Mini App",
+        "not_found": "Извините, фильм или эпизод с таким кодом не найден. 😕",
+        "choose_episode": "📺 **Эпизоды сериала:** Выберите нужный эпизод👇",
+        "vip_required": "⭐ **Внимание! Для просмотра этого эпизода нужна VIP подписка!**\n\nДля приобретения подписки напишите админу:",
+        "contact_admin": "💬 Связаться с админом"
     }
-  } catch (e) {
-    console.warn("Serverga ulanib bo'lmadi:", e);
-  }
 }
 
+def get_language_keyboard():
+    builder = InlineKeyboardBuilder()
+    builder.button(text="🇺🇿 O'zbekcha", callback_data="lang_uz")
+    builder.button(text="🇷🇺 Русский", callback_data="lang_ru")
+    builder.adjust(2)
+    return builder.as_markup()
+
+@dp.message(Command("cancel"))
+async def cmd_cancel(message: types.Message, state: FSMContext):
+    await state.clear()
+    await message.answer("❌ Barcha amallar bekor qilindi.")
+
+@dp.message(Command("start"))
+async def cmd_start(message: types.Message, state: FSMContext):
+    await state.clear()
+    set_user_language(message.from_user.id, "uz")
+    await message.answer("Assalomu alaykum! Iltimos, tilni tanlang:\n\nЗдравствуйте! Пожалуйста, выберите язык:", reply_markup=get_language_keyboard())
+
+@dp.callback_query(F.data.startswith("lang_"))
+async def language_selected(callback: types.CallbackQuery):
+    lang = callback.data.split("_")[1]
+    set_user_language(callback.from_user.id, lang)
+    
+    builder = InlineKeyboardBuilder()
+    # MINI APP TUGMASI QO'SHILDI
+    builder.button(text=TEXTS[lang]["mini_app_btn"], web_app=WebAppInfo(url=MINI_APP_URL))
+    builder.button(text=TEXTS[lang]["catalog_btn"], callback_data="show_catalog")
+    builder.adjust(1)
+    
+    await callback.message.edit_text(TEXTS[lang]["welcome"], reply_markup=builder.as_markup())
+    await callback.answer()
+
+@dp.callback_query(F.data == "show_catalog")
+async def process_show_catalog(callback: types.CallbackQuery, state: FSMContext):
+    await state.clear()
+    user_id = callback.from_user.id
+    lang = get_user_language(user_id)
+    
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT code, caption FROM content WHERE series_code IS NULL")
+    movies = cursor.fetchall()
+    cursor.execute("SELECT DISTINCT series_code FROM content WHERE series_code IS NOT NULL")
+    series = cursor.fetchall()
+    conn.close()
+    
+    if not movies and not series:
+        return await callback.answer("Hozircha bazada kinolar yo'q.", show_alert=True)
+        
+    builder = InlineKeyboardBuilder()
+    text = "📋 **Bizdagi mavjud kinolar va seriallar ro'yxati:**\n\n" if lang == "uz" else "📋 **Список доступных фильмов и сериалов:**\n\n"
+        
+    for code, caption in movies:
+        text += f"🎬 Kod: `{code}` — {caption.splitlines()[0][:30]}...\n"
+        builder.button(text=f"🎬 {code}", callback_data=f"search_{code}")
+        
+    for scode in series:
+        s_code = scode[0]
+        text += f"📺 Serial kodi: `{s_code}`\n"
+        builder.button(text=f"📺 {s_code}", callback_data=f"search_{s_code}")
+        
+    builder.adjust(3)
+    await callback.message.answer(text, reply_markup=builder.as_markup())
+    await callback.answer()
+
+# ==========================================
+# ADMIN PANEL (JANRLAR BILAN)
+# ==========================================
+@dp.message(Command("admin"))
+async def admin_panel(message: types.Message, state: FSMContext):
+    await state.clear()
+    builder = InlineKeyboardBuilder()
+    builder.button(text="🎬 Kino qo'shish", callback_data="adm_add_movie")
+    builder.button(text="📺 Serial qismi qo'shish", callback_data="adm_add_series")
+    builder.button(text="🗑 O'chirish", callback_data="adm_delete")
+    builder.button(text="📢 Xabar tarqatish", callback_data="adm_broadcast")
+    builder.button(text="⭐ VIP berish", callback_data="adm_give_vip")
+    builder.button(text="📋 Kinolar ro'yxati", callback_data="adm_list")
+    builder.button(text="📊 Statistika", callback_data="adm_stats")
+    builder.adjust(2)
+    await message.answer("👑 **Admin panelga xush kelibsiz!** Kerakli amalni tanlang:", reply_markup=builder.as_markup())
+
+@dp.callback_query(F.data == "adm_delete")
+async def adm_delete(callback: types.CallbackQuery, state: FSMContext):
+    await callback.message.answer("🗑 O'chirmoqchi bo'lgan kino yoki serialning **kodini** kiriting:\n*(Kino kodi yoki Serial umumiy kodini yozishingiz mumkin. Bekor qilish /cancel)*")
+    await state.set_state(AdminStates.delete_content_code)
+    await callback.answer()
+
+@dp.message(AdminStates.delete_content_code)
+async def process_delete_content(message: types.Message, state: FSMContext):
+    if not message.text: return
+    code = message.text.strip()
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM content WHERE code = ? OR series_code = ?", (code, code))
+    deleted_count = cursor.rowcount
+    conn.commit()
+    conn.close()
+    
+    if deleted_count > 0:
+        await message.answer(f"✅ Bazadan muvaffaqiyatli o'chirildi!\nO'chirilgan jami qismlar/kinolar: **{deleted_count} ta**")
+        await state.clear()
+    else:
+        await message.answer(f"❌ `{code}` kodli kino bazadan topilmadi. Boshqa kod yozing (yoki /cancel):")
+
+@dp.callback_query(F.data == "adm_add_movie")
+async def adm_add_movie(callback: types.CallbackQuery, state: FSMContext):
+    await callback.message.answer("🎬 Kino uchun **noyob kod** kiriting:\n*(Bekor qilish uchun /cancel)*")
+    await state.set_state(AdminStates.add_movie_code)
+    await callback.answer()
+
+@dp.message(AdminStates.add_movie_code)
+async def process_movie_code(message: types.Message, state: FSMContext):
+    if not message.text: return
+    await state.update_data(code=message.text.strip())
+    await message.answer("🎥 Endi kino **videosini** yuboring:")
+    await state.set_state(AdminStates.add_movie_file)
+
+@dp.message(AdminStates.add_movie_file, F.video | F.document)
+async def process_movie_file(message: types.Message, state: FSMContext):
+    file_id = message.video.file_id if message.video else message.document.file_id
+    await state.update_data(file_id=file_id)
+    await message.answer("📝 Kinoning **nomi va opisaniyasini** (matn) kiriting:")
+    await state.set_state(AdminStates.add_movie_caption)
+
+# JANR TANLASH BOSQICHI QO'SHILDI
+@dp.message(AdminStates.add_movie_caption)
+async def process_movie_caption(message: types.Message, state: FSMContext):
+    if not message.text: return
+    await state.update_data(caption=message.text)
+    
+    genres = ["Jangari 💥", "Komediya 😂", "Drama 🎭", "Fantastika 👽", "Qo'rqinchli 👻", "Melodrama 💖", "Multfilm 🧸", "Boshqa 🎬"]
+    builder = InlineKeyboardBuilder()
+    for g in genres:
+        builder.button(text=g, callback_data=f"genre_{g}")
+    builder.adjust(2)
+    
+    await message.answer("🎭 Kino janrini tanlang:", reply_markup=builder.as_markup())
+    await state.set_state(AdminStates.add_movie_genre)
+
+@dp.callback_query(AdminStates.add_movie_genre, F.data.startswith("genre_"))
+async def process_movie_genre(callback: types.CallbackQuery, state: FSMContext):
+    genre = callback.data.split("_")[1]
+    data = await state.get_data()
+    
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('''INSERT OR REPLACE INTO content (code, file_id, caption, series_code, episode_num, genre) VALUES (?, ?, ?, NULL, NULL, ?)''', (data['code'], data['file_id'], data['caption'], genre))
+    conn.commit()
+    conn.close()
+    
+    await callback.message.edit_text(f"✅ Kino muvaffaqiyatli qo'shildi!\nKodi: `{data['code']}`\nJanri: {genre}")
+    await state.clear()
+
+@dp.callback_query(F.data == "adm_add_series")
+async def adm_add_series(callback: types.CallbackQuery, state: FSMContext):
+    await callback.message.answer("📺 Serial kodini kiriting:\n*(Bekor qilish uchun /cancel)*")
+    await state.set_state(AdminStates.add_series_code)
+    await callback.answer()
+
+@dp.message(AdminStates.add_series_code)
+async def process_series_code(message: types.Message, state: FSMContext):
+    if not message.text: return
+    await state.update_data(series_code=message.text.strip())
+    await message.answer("🔢 Bu nechanchi qism? (Faqat raqam kiriting):")
+    await state.set_state(AdminStates.add_series_ep_num)
+
+@dp.message(AdminStates.add_series_ep_num)
+async def process_series_ep_num(message: types.Message, state: FSMContext):
+    if not message.text or not message.text.isdigit(): return await message.answer("❌ Iltimos, faqat raqam kiriting!")
+    await state.update_data(episode_num=int(message.text))
+    await message.answer("🎥 Serial qismining **videosini** yuboring:")
+    await state.set_state(AdminStates.add_series_file)
+
+@dp.message(AdminStates.add_series_file, F.video | F.document)
+async def process_series_file(message: types.Message, state: FSMContext):
+    file_id = message.video.file_id if message.video else message.document.file_id
+    await state.update_data(file_id=file_id)
+    await message.answer("📝 Qism uchun **nomi va opisaniyasini** (matn) kiriting:")
+    await state.set_state(AdminStates.add_series_caption)
+
+@dp.message(AdminStates.add_series_caption)
+async def process_series_caption(message: types.Message, state: FSMContext):
+    if not message.text: return
+    data = await state.get_data()
+    series_code = data['series_code']
+    ep_num = data['episode_num']
+    code = f"{series_code}_ep{ep_num}"
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('''INSERT OR REPLACE INTO content (code, file_id, caption, series_code, episode_num, genre) VALUES (?, ?, ?, ?, ?, ?)''', (code, data['file_id'], message.text, series_code, ep_num, 'Serial 📺'))
+    conn.commit()
+    conn.close()
+    await message.answer(f"✅ Serialning {ep_num}-qismi qo'shildi!\nQidirish kodi: `{code}`")
+    await state.clear()
+
+# --- QOLGAN ADMIN FUNKSIYALAR ---
+@dp.callback_query(F.data == "adm_give_vip")
+async def adm_give_vip(callback: types.CallbackQuery, state: FSMContext):
+    await callback.message.answer("👤 VIP bermoqchi bo'lgan foydalanuvchining ID raqamini yuboring:")
+    await state.set_state(AdminStates.give_vip_user_id)
+    await callback.answer()
+
+@dp.message(AdminStates.give_vip_user_id)
+async def process_give_vip(message: types.Message, state: FSMContext):
+    if not message.text or not message.text.isdigit(): return
+    user_id = int(message.text)
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('UPDATE users SET is_vip = 1 WHERE user_id = ?', (user_id,))
+    conn.commit()
+    conn.close()
+    await message.answer(f"⭐ `{user_id}` foydalanuvchiga VIP berildi!")
+    await state.clear()
+
+@dp.callback_query(F.data == "adm_stats")
+async def adm_stats(callback: types.CallbackQuery):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('SELECT COUNT(*) FROM users')
+    u = cursor.fetchone()[0]
+    cursor.execute('SELECT COUNT(*) FROM users WHERE is_vip = 1')
+    v = cursor.fetchone()[0]
+    cursor.execute('SELECT COUNT(*) FROM content')
+    c = cursor.fetchone()[0]
+    conn.close()
+    await callback.message.answer(f"📊 **Statistika:**\n👥 Foydalanuvchilar: {u}\n⭐ VIP: {v}\n🎬 Kinolar/Qismlar: {c}")
+    await callback.answer()
+
+@dp.callback_query(F.data == "adm_list")
+async def adm_list(callback: types.CallbackQuery):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('SELECT code FROM content')
+    rows = cursor.fetchall()
+    conn.close()
+    if not rows: return await callback.message.answer("Bazada kinolar yo'q.")
+    text = "📋 **Barcha kodlar ro'yxati:**\n" + "\n".join([f"• `{r[0]}`" for r in rows])
+    await callback.message.answer(text)
+    await callback.answer()
+
+@dp.callback_query(F.data == "adm_broadcast")
+async def adm_broadcast(callback: types.CallbackQuery, state: FSMContext):
+    await callback.message.answer("📢 **Barcha foydalanuvchilarga tarqatish uchun xabarni yuboring.**")
+    await state.set_state(AdminStates.broadcast_message)
+    await callback.answer()
+
+@dp.message(AdminStates.broadcast_message)
+async def process_broadcast_message(message: types.Message, state: FSMContext):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('SELECT user_id FROM users')
+    users = cursor.fetchall()
+    conn.close()
+    
+    if not users:
+        return await message.answer("❌ Bazada foydalanuvchilar yo'q.")
+
+    await message.answer(f"⏳ Xabar bazadagi **{len(users)} ta** foydalanuvchiga tarqatilmoqda. Iltimos kuting...")
+    success = fail = 0
+    for (user_id,) in users:
+        try:
+            await message.copy_to(chat_id=user_id)
+            success += 1
+        except Exception:
+            fail += 1
+        await asyncio.sleep(0.05)
+        
+    await message.answer(f"✅ **Xabar tarqatish yakunlandi!**\n📬 Yetti: {success} ta\n🚫 Xato/Blok: {fail} ta")
+    await state.clear()
 
 
-    changeLang(currentLang);
-    renderHeroSlider();
-    fetchMovies();
-  </script>
-</body>
-</html>
+# ==========================================
+# QIDIRUV VA WEB APP DATA TIZIMI
+# ==========================================
+@dp.message(F.web_app_data)
+async def process_web_app_data(message: types.Message):
+    # Mini app dan kelgan kodni ushlab olamiz
+    code = message.web_app_data.data.strip()
+    await process_search_logic(message, code, message.from_user.id)
+
+@dp.message()
+async def handle_user_input(message: types.Message, state: FSMContext):
+    if not message.text: return
+    if await state.get_state() is not None: return
+    code = message.text.strip()
+    await process_search_logic(message, code, message.from_user.id)
+
+@dp.callback_query(F.data.startswith("search_"))
+async def process_search_callback(callback: types.CallbackQuery):
+    code = callback.data.split("search_")[1]
+    await process_search_logic(callback.message, code, callback.fromuser.id, is_callback=True, callback_obj=callback)
+
+async def process_search_logic(message: types.Message, code: str, user_id: int, is_callback=False, callback_obj=None):
+    lang = get_user_language(user_id)
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    cursor.execute('SELECT file_id, caption, series_code, episode_num FROM content WHERE code = ?', (code,))
+    row = cursor.fetchone()
+    
+    if row:
+        file_id, caption, series_code, episode_num = row
+        if series_code and episode_num and episode_num >= 3 and not is_user_vip(user_id):
+            conn.close()
+            builder = InlineKeyboardBuilder()
+            builder.button(text=TEXTS[lang]["contact_admin"], url=f"https://t.me/{ADMIN_USERNAME.lstrip('@')}")
+            await message.answer(TEXTS[lang]["vip_required"], reply_markup=builder.as_markup(), parse_mode="Markdown")
+            if is_callback: await callback_obj.answer()
+            return
+            
+        conn.close()
+        cat_builder = InlineKeyboardBuilder()
+        cat_builder.button(text=TEXTS[lang]["catalog_btn"], callback_data="show_catalog")
+        
+        await message.answer_video(video=file_id, caption=caption, protect_content=True, reply_markup=cat_builder.as_markup())
+        if is_callback: await callback_obj.answer()
+        return
+
+    cursor.execute('SELECT code, episode_num FROM content WHERE series_code = ? ORDER BY episode_num ASC', (code,))
+    episodes = cursor.fetchall()
+    conn.close()
+    
+    if episodes:
+        builder = InlineKeyboardBuilder()
+        for ep_code, ep_num in episodes:
+            builder.button(text=f"{ep_num}-qism", callback_data=f"play_{ep_code}")
+        builder.adjust(4)
+        builder.row(types.InlineKeyboardButton(text=TEXTS[lang]["catalog_btn"], callback_data="show_catalog"))
+        
+        await message.answer(TEXTS[lang]["choose_episode"], reply_markup=builder.as_markup())
+        if is_callback: await callback_obj.answer()
+    else:
+        if is_callback:
+            await callback_obj.answer(TEXTS[lang]["not_found"], show_alert=True)
+        else:
+            await message.answer(TEXTS[lang]["not_found"])
+
+@dp.callback_query(F.data.startswith("play_"))
+async def process_play_episode(callback: types.CallbackQuery):
+    code = callback.data.split("play_")[1] 
+    user_id = callback.from_user.id
+    lang = get_user_language(user_id)
+    
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('SELECT file_id, caption, series_code, episode_num FROM content WHERE code = ?', (code,))
+    row = cursor.fetchone()
+    
+    if not row:
+        conn.close()
+        return await callback.answer(TEXTS[lang]["not_found"], show_alert=True)
+        
+    file_id, caption, series_code, episode_num = row
+    
+    if series_code and episode_num >= 3 and not is_user_vip(user_id):
+        conn.close()
+        builder = InlineKeyboardBuilder()
+        builder.button(text=TEXTS[lang]["contact_admin"], url=f"https://t.me/{ADMIN_USERNAME.lstrip('@')}")
+        await callback.message.answer(TEXTS[lang]["vip_required"], reply_markup=builder.as_markup(), parse_mode="Markdown")
+        return await callback.answer()
+        
+    if series_code:
+        cursor.execute('INSERT OR IGNORE INTO user_watched (user_id, series_code, episode_num) VALUES (?, ?, ?)', (user_id, series_code, episode_num))
+        conn.commit()
+        
+    conn.close()
+    cat_builder = InlineKeyboardBuilder()
+    cat_builder.button(text=TEXTS[lang]["catalog_btn"], callback_data="show_catalog")
+    await callback.message.answer_video(video=file_id, caption=caption, protect_content=True, reply_markup=cat_builder.as_markup())
+    await callback.answer()
+
+# ==========================================
+# MINI APP UCHUN API SERVER 
+# ==========================================
+async def api_get_movies(request):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    # Barcha kinolar (Janri bilan)
+    try:
+        cursor.execute("SELECT code, caption, genre FROM content WHERE series_code IS NULL")
+    except sqlite3.OperationalError:
+        cursor.execute("SELECT code, caption, 'Boshqa' as genre FROM content WHERE series_code IS NULL")
+    movies = cursor.fetchall()
+    
+    # Seriallar (Janri bilan)
+    try:
+        cursor.execute("SELECT series_code, MIN(caption), genre FROM content WHERE series_code IS NOT NULL GROUP BY series_code")
+    except sqlite3.OperationalError:
+        cursor.execute("SELECT series_code, MIN(caption), 'Serial 📺' as genre FROM content WHERE series_code IS NOT NULL GROUP BY series_code")
+    series = cursor.fetchall()
+    
+    conn.close()
+    content_data = []
+    
+    for code, caption, genre in movies:
+        title = caption.splitlines()[0][:40] if caption else "Nomsiz kino"
+        content_data.append({"code": code, "title": title, "type": "movie", "genre": genre})
+        
+    for scode, caption, genre in series:
+        title = caption.splitlines()[0][:40] if caption else f"Serial"
+        content_data.append({"code": scode, "title": title, "type": "series", "genre": "Serial 📺"})
+        
+    headers = {"Access-Control-Allow-Origin": "*"}
+    return web.json_response(content_data, headers=headers)
+
+async def main():
+    init_db()
+    logging.basicConfig(level=logging.INFO)
+    
+    # API serverni ishga tushirish (8080-portda)
+    app = web.Application()
+    app.router.add_get('/api/movies', api_get_movies)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, '0.0.0.0', 8080)
+    await site.start()
+    print("🌐 API server ishga tushdi...")
+    
+    print("🤖 Bot muvaffaqiyatli ishga tushdi...")
+    await dp.start_polling(bot)
+
+if __name__ == "__main__":
+    asyncio.run(main())
